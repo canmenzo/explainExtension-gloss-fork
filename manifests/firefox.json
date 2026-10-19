@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Explain",
+  "version": "1.0.0",
+  "description": "Explain the word or passage you select on a page.",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["https://generativelanguage.googleapis.com/*"],
+  "action": {
+    "default_title": "Explain",
+    "default_popup": "popup.html"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; connect-src https://generativelanguage.googleapis.com"
+  },
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "explain@usegloss.io",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": ["authenticationInfo", "websiteContent"]
+      }
+    },
+    "gecko_android": {
+      "strict_min_version": "142.0"
+    }
+  }
+}

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Explain</title>
+    <link rel="stylesheet" href="popup.css">
+    <script src="popup.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <header>
+        <span class="mark" aria-hidden="true">e</span>
+        <div><h1>Explain</h1><p>Select text to bring up an explanation.</p></div>
+      </header>
+      <button id="enable" type="button">Use on this page</button>
+      <p id="status" role="status" aria-live="polite">Only this tab is enabled.</p>
+      <details>
+        <summary>Gemini API key and model</summary>
+        <form id="key-form">
+          <label for="model">Model</label>
+          <select id="model" name="model">
+            <option value="gemini-3.8-flash">Gemini 3.8 Flash</option>
+            <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
+            <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite</option>
+            <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash-Lite</option>
+          </select>
+          <label for="api-key">API key</label>
+          <a class="help" href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer">Get a key in Google AI Studio</a>
+          <input id="api-key" name="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="Enter your key">
+          <button class="save" type="submit">Save for this session</button>
+          <p class="hint">Your key stays in browser session memory and clears when the browser closes. Free-tier limits apply; Google may use submitted content to improve its products.</p>
+        </form>
+      </details>
+    </main>
+  </body>
+</html>
