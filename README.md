@@ -11,7 +11,13 @@ rustup target add wasm32-unknown-unknown
 npm run build
 ```
 
-The build compiles selection validation and prompt composition from Rust to WebAssembly, then creates `dist/chrome.zip` and `dist/firefox.zip`. The small JavaScript files connect that core to browser extension APIs and the page UI.
+The build compiles the Rust application core to WebAssembly, then creates `dist/chrome.zip` and `dist/firefox.zip`. Rust owns selection validation and limits, the Explain workflow state transitions, Gemini request payload construction, and Gemini response and provider error parsing. JavaScript is the browser adapter: it reads the page selection, renders the accessible UI, routes extension messages, performs the authenticated fetch, and passes data to and from the Rust WebAssembly module. No explanation is generated locally; each request goes to Google Gemini using the user's session-only key.
+
+Run the Rust unit tests and extension message tests, including calls through the compiled WebAssembly module, with:
+
+```sh
+npm test
+```
 
 ## Load in Chrome
 

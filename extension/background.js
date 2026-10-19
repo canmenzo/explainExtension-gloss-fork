@@ -1,11 +1,10 @@
 const api = globalThis.browser ?? globalThis.chrome;
 const DEFAULT_MODEL = "gemini-3.8-flash";
-const MODELS = [DEFAULT_MODEL, "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"];
 let corePromise;
 
-api.runtime.onMessage.addListener((message, sender) => {
+api.runtime.onMessage.addListener((message) => {
   if (message?.type === "save-key" && typeof message.key === "string") {
-    const model = MODELS.includes(message.model) ? message.model : DEFAULT_MODEL;
+    const model = typeof message.model === "string" ? message.model : DEFAULT_MODEL;
     return api.storage.session.set({ geminiKey: message.key, geminiModel: model }).then(() => ({ ok: true }));
   }
   if (message?.type === "enable-tab") return enableTab();
@@ -24,46 +23,45 @@ async function enableTab() {
 }
 
 async function explain(message) {
-  if (typeof message.selection !== "string") return { error: "Select some text first." };
-  const { geminiKey, geminiModel = DEFAULT_MODEL } = await api.storage.session.get(["geminiKey", "geminiModel"]);
-  if (!geminiKey) return { error: "Add your Google Gemini API key in the Explain extension menu." };
   const core = await loadCore();
-  const selectionBytes = new TextEncoder().encode(message.selection);
-  const selectionPointer = core.allocate(selectionBytes.length) >>> 0;
-  new Uint8Array(core.memory.buffer).set(selectionBytes, selectionPointer);
-  const valid = core.selection_is_valid(selectionPointer, selectionBytes.length);
-  core.release(selectionPointer, selectionBytes.length);
-  if (!valid) return { error: "Select some text first." };
-  const encoder = new TextEncoder();
-  const inputs = [
-    encoder.encode(typeof message.title === "string" ? message.title : ""),
-    encoder.encode(typeof message.context === "string" ? message.context : ""),
-    selectionBytes,
-  ];
-  const pointers = inputs.map((bytes) => core.allocate(bytes.length) >>> 0);
-  const capacity = 80000;
-  const outputPointer = core.allocate(capacity) >>> 0;
-  let prompt;
-  try {
-    inputs.forEach((bytes, index) => new Uint8Array(core.memory.buffer).set(bytes, pointers[index]));
-    const length = core.build_prompt(pointers[0], inputs[0].length, pointers[1], inputs[1].length, pointers[2], inputs[2].length, outputPointer, capacity);
-    if (!length) return { error: "Select some text first." };
-    prompt = new TextDecoder().decode(new Uint8Array(core.memory.buffer, outputPointer, length));
-  } finally {
-    pointers.forEach((pointer, index) => core.release(pointer, inputs[index].length));
-    core.release(outputPointer, capacity);
+  const selection = typeof message.selection === "string" ? message.selection : "";
+  const state = core.transition(0, 1);
+  if (!state || !core.isValidSelection(selection)) return { error: "Select some text first." };
+  const requesting = core.transition(state, 2);
+  if (requesting !== 2) return { error: "Select some text first." };
+  const { geminiKey, geminiModel = DEFAULT_MODEL } = await api.storage.session.get(["geminiKey", "geminiModel"]);
+  if (!geminiKey) {
+    core.transition(requesting, 4);
+    return { error: "Add your Google Gemini API key in the Explain extension menu." };
   }
+  let request;
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent`, {
+    request = core.buildRequest(
+      geminiModel,
+      typeof message.title === "string" ? message.title : "",
+      typeof message.context === "string" ? message.context : "",
+      selection,
+    );
+  } catch {
+    core.transition(requesting, 4);
+    return { error: "Could not prepare this explanation." };
+  }
+  if (request.error) {
+    core.transition(requesting, 4);
+    return request;
+  }
+  const { model, ...body } = request;
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.4, maxOutputTokens: 300 } }),
+      body: JSON.stringify(body),
     });
-    const body = await response.json();
-    if (!response.ok) return { error: response.status === 401 || response.status === 403 ? "Google rejected this key. Check that it is a Gemini API key." : response.status === 429 ? "Google rate or usage limit reached. Try again later." : body.error?.message || `Google Gemini returned ${response.status}.` };
-    const answer = body.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("");
-    return typeof answer === "string" && answer.trim() ? { answer: answer.trim() } : { error: "Google Gemini returned no explanation." };
+    const result = core.parseResponse(response.status, await response.text());
+    core.transition(requesting, result.answer ? 3 : 4);
+    return result;
   } catch {
+    core.transition(requesting, 4);
     return { error: "Could not reach Google Gemini. Check your connection and try again." };
   }
 }
@@ -72,6 +70,47 @@ function loadCore() {
   corePromise ??= fetch(api.runtime.getURL("core.wasm"))
     .then((response) => response.arrayBuffer())
     .then((bytes) => WebAssembly.instantiate(bytes, {}))
-    .then(({ instance }) => instance.exports);
+    .then(({ instance }) => makeCore(instance.exports));
   return corePromise;
+}
+
+function makeCore(wasm) {
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+
+  function invokeJson(name, prefix, values) {
+    const encoded = values.map((value) => encoder.encode(value));
+    const pointers = encoded.map((bytes) => wasm.allocate(bytes.length) >>> 0);
+    const capacity = 100000;
+    const output = wasm.allocate(capacity) >>> 0;
+    try {
+      encoded.forEach((bytes, index) => new Uint8Array(wasm.memory.buffer).set(bytes, pointers[index]));
+      const args = prefix.concat(pointers.flatMap((pointer, index) => [pointer, encoded[index].length]), [output, capacity]);
+      const length = wasm[name](...args);
+      return JSON.parse(decoder.decode(new Uint8Array(wasm.memory.buffer, output, length)));
+    } finally {
+      pointers.forEach((pointer, index) => wasm.release(pointer, encoded[index].length));
+      wasm.release(output, capacity);
+    }
+  }
+
+  return {
+    transition: wasm.transition,
+    isValidSelection(text) {
+      const bytes = encoder.encode(text);
+      const pointer = wasm.allocate(bytes.length) >>> 0;
+      try {
+        new Uint8Array(wasm.memory.buffer).set(bytes, pointer);
+        return wasm.selection_is_valid(pointer, bytes.length) === 1;
+      } finally {
+        wasm.release(pointer, bytes.length);
+      }
+    },
+    buildRequest(model, title, context, selection) {
+      return invokeJson("build_request", [], [model, title, context, selection]);
+    },
+    parseResponse(status, body) {
+      return invokeJson("parse_response", [status], [body]);
+    },
+  };
 }
