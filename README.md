@@ -2,6 +2,14 @@
 
 Explain a selected word or passage on the page you are reading. Select text to reveal a small floating action, then choose **Explain**. The extension sends the selected text, nearby paragraph, and page title directly to Google Gemini.
 
+## Interface
+
+The popup opens setup when your session has no API key and shows whether a key has been saved. Choose **Use on this page** to enable the active tab, then select a word or passage. Press **Enter** or choose **Explain** to open an explanation beside the selection.
+
+The explanation card keeps the selected passage in view, shows progress while waiting, and offers **Try again** if the request fails. Long answers scroll inside the card. Dismiss it with its close button, **Escape**, or a click outside. The interface follows your system's reduced motion preference.
+
+The implementation and verification plan is in [UI_PLAN.md](UI_PLAN.md).
+
 ## Build
 
 Requires Node.js 20 or later and Rust stable. Add the WebAssembly target, then build:
