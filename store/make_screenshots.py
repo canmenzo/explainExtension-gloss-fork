@@ -174,6 +174,7 @@ async def main():
         page, article = await window(context, name)
         await explain(article)
         await article.evaluate("a => { window.ports.at(-1).emit({text: a}); window.ports.at(-1).emit({done: true}); }", ANSWER)
+        await page.wait_for_timeout(1600)  # let every character finish fading in
         await shot(page, name)
 
         name = "4-error-retry.png"

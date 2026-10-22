@@ -137,21 +137,16 @@ footer nav a:hover{transform:translateY(-2px)}
 .xx svg{width:12px;height:12px;stroke:#6b7586;stroke-width:1.75;stroke-linecap:round;fill:none}
 .xb{padding:12px 16px 16px}
 .answer{margin:0;color:#1b2230;font-size:14px;line-height:22px}
-.answer span{animation:fade .2s cubic-bezier(.22,1,.36,1)}
-@keyframes fade{from{opacity:0}}
 .skel{display:none;gap:12px;padding:6px 0}
 .skel i{display:block;height:10px;border-radius:5px;background:linear-gradient(90deg,#eef1f6 0,#e1e6ee 40%,#eef1f6 80%) 0 0/300% 100%;animation:shimmer 1.4s ease-in-out infinite}
 .skel i:nth-child(2){width:92%}.skel i:nth-child(3){width:58%}
 @keyframes shimmer{from{background-position:100% 0}to{background-position:0 0}}
-.answer::after{content:"";display:none;width:2px;height:15px;margin-left:2px;border-radius:1px;vertical-align:-2px;background:#315dad;animation:breathe .9s ease-in-out infinite alternate}
-@keyframes breathe{from{opacity:1}to{opacity:.2}}
 /* Without JS, or with reduced motion, the demo shows its final state */
 .demo[data-stage="0"] mark{background:transparent;color:inherit}
 .demo[data-stage="2"] .menu{opacity:1;transform:none}
 .demo[data-stage="0"] .xcard,.demo[data-stage="1"] .xcard,.demo[data-stage="2"] .xcard{opacity:0;transform:translateY(4px) scale(.98)}
 .demo[data-stage="3"]:not([data-streaming]) .skel{display:grid}
 .demo[data-stage="3"]:not([data-streaming]) .answer{display:none}
-.demo[data-streaming] .answer::after{display:inline-block}
 .demo figcaption{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 12px;margin-top:20px}
 .chips{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:0;padding:0;list-style:none;counter-reset:c}
 .chips li{counter-increment:c;display:flex;align-items:center;gap:8px;padding:4px 12px 4px 4px;border:1px solid var(--border);border-radius:9999px;background:var(--bg);font-size:14px;line-height:20px;font-weight:600;color:var(--soft);transition:color .4s var(--ease),border-color .4s var(--ease),background-color .4s var(--ease)}

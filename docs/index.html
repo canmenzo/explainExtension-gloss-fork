@@ -149,14 +149,23 @@ if(answer.textContent===full)page.style.minHeight=(y+10+card.offsetHeight+32)+"p
 }
 function stage(n){demo.dataset.stage=n;chips.forEach(function(c){if(+c.dataset.s===Math.min(n,3))c.setAttribute("aria-current","step");else c.removeAttribute("aria-current")})}
 function at(ms,f){timers.push(setTimeout(f,ms))}
+// Each new character fades in from violet through pink to the text color, paced evenly
+// (at most 90 a second, and any burst clears within half a second). After CreatorHive/bridle (MIT).
+var TINT=[{offset:0,opacity:0,color:"color-mix(in oklab, #8b5cf6 65%, #1b2230)"},{offset:.35,opacity:1},{offset:.4,color:"color-mix(in oklab, #ec4899 55%, #1b2230)"},{offset:1,opacity:1,color:"#1b2230"}],last=0;
+function reveal(text){
+var chars=Array.from(text),step=Math.min(1000/90,500/chars.length);last=Math.max(performance.now(),last);
+chars.forEach(function(c){var s=document.createElement("span");s.textContent=c;answer.appendChild(s);
+if(!s.animate)return;var a=s.animate(TINT,{duration:900,fill:"both"});a.startTime=last+=step;a.onfinish=function(){s.replaceWith(c)}});
+}
 // The whole sequence finishes in under five seconds.
 function play(){
 timers.forEach(clearTimeout);timers=[];replay.disabled=true;answer.textContent="";delete demo.dataset.streaming;
 stage(0);at(400,function(){stage(1)});at(1100,function(){stage(2)});at(1700,function(){ex.classList.add("hot")});
 at(2200,function(){ex.classList.remove("hot");stage(3)});
-var words=full.split(" "),t=2900;
-words.forEach(function(w,i){at(t+i*38,function(){if(!i)demo.dataset.streaming="";var s=document.createElement("span");s.textContent=(i?" ":"")+w;answer.appendChild(s)})});
-at(t+words.length*38+200,function(){delete demo.dataset.streaming;stage(4);replay.disabled=false});
+// Gemini-sized chunks of about six words, each revealed exactly like the extension's card.
+var words=full.split(" "),t=2900,n=0;last=0;
+for(var i=0;i<words.length;i+=6)(function(chunk,k){at(t+k*320,function(){if(!k)demo.dataset.streaming="";reveal(chunk)})})((i?" ":"")+words.slice(i,i+6).join(" "),n++);
+at(t+(n-1)*320+1400,function(){delete demo.dataset.streaming;stage(4);replay.disabled=false});
 }
 place();addEventListener("resize",place);
 if(document.fonts)document.fonts.ready.then(place);

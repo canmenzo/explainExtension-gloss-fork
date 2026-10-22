@@ -39,8 +39,6 @@
     .body{min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:12px 16px 16px;scrollbar-width:thin;scrollbar-color:#CDD5E1 transparent}
     .body:focus-visible{box-shadow:inset 0 0 0 2px #315DAD33}
     .answer{margin:0;color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere;text-wrap:pretty}
-    .answer span{animation:fade 200ms var(--ease)}
-    .caret{display:inline-block;width:2px;height:15px;margin-left:2px;border-radius:1px;vertical-align:-2px;background:var(--blue);animation:breathe 900ms ease-in-out infinite alternate}
     .skeleton{display:grid;gap:12px;padding:6px 0}
     .skeleton i{display:block;height:10px;border-radius:5px;background:linear-gradient(90deg,#EEF1F6 0,#E1E6EE 40%,#EEF1F6 80%) 0 0/300% 100%;animation:shimmer 1.4s ease-in-out infinite}
     .skeleton i:nth-child(2){width:92%}.skeleton i:nth-child(3){width:58%}
@@ -50,10 +48,8 @@
     .retry{height:32px;margin:12px 0 0 26px;padding:0 12px 0 10px;border-radius:8px;background:#EDF2FB;color:var(--blue);font-size:13px;font-weight:600}
     .retry:hover{background:#E1E9F8}
     .retry svg{width:14px;height:14px;stroke-width:1.75}
-    @keyframes fade{from{opacity:0}}
-    @keyframes breathe{from{opacity:1}to{opacity:.2}}
     @keyframes shimmer{from{background-position:100% 0}to{background-position:0 0}}
-    @media(prefers-reduced-motion:reduce){.card,:host([data-placement="above"]) .card:not(.is-open){transition:none;transform:none}.answer span,.caret,.skeleton i{animation:none}button:active{transform:none}}
+    @media(prefers-reduced-motion:reduce){.card,:host([data-placement="above"]) .card:not(.is-open){transition:none;transform:none}.skeleton i{animation:none}button:active{transform:none}}
   `;
   const card = document.createElement("section");
   card.className = "card";
@@ -167,6 +163,17 @@
     place();
   }
 
+  // Each new character fades in from violet through pink to the text color, paced evenly
+  // (at most 90 a second, and any burst clears within half a second). After CreatorHive/bridle (MIT).
+  const FADE = 900;
+  const TINT = [
+    { offset: 0, opacity: 0, color: "color-mix(in oklab, #8B5CF6 65%, #1B2230)" },
+    { offset: 0.35, opacity: 1 },
+    { offset: 0.4, color: "color-mix(in oklab, #EC4899 55%, #1B2230)" },
+    { offset: 1, opacity: 1, color: "#1B2230" },
+  ];
+  const segmenter = "Segmenter" in Intl ? new Intl.Segmenter() : null;
+
   function run() {
     port?.disconnect();
     host.dataset.phase = "loading";
@@ -180,34 +187,48 @@
     open();
     place();
     let answer;
-    let caret;
+    let held = "";
+    let last = 0;
+    const reveal = (text) => {
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) return answer.append(text);
+      const chars = segmenter ? Array.from(segmenter.segment(text), (part) => part.segment) : Array.from(text);
+      const step = Math.min(1000 / 90, 500 / chars.length);
+      last = Math.max(performance.now(), last);
+      for (const char of chars) {
+        const span = document.createElement("span");
+        span.textContent = char;
+        answer.append(span);
+        // Started on the document timeline at its own arrival time, so later chunks never restart it.
+        const fade = span.animate(TINT, { duration: FADE, fill: "both" });
+        fade.startTime = last += step;
+        fade.onfinish = () => span.replaceWith(char);
+      }
+    };
     const current = api.runtime.connect({ name: "explain" });
     port = current;
     current.onMessage.addListener((message) => {
       if (current !== port) return;
       if (message.error) return showError(message.error);
-      if (message.text) {
+      // Trailing whitespace waits for the next chunk, so the answer never ends on a blank line.
+      let text = held + (message.text ?? "");
+      if (!answer) text = text.trimStart();
+      held = text.match(/\s*$/)[0];
+      text = text.slice(0, text.length - held.length);
+      if (text) {
         if (!answer) {
           answer = document.createElement("p");
           answer.className = "answer";
-          caret = document.createElement("i");
-          caret.className = "caret";
-          caret.setAttribute("aria-hidden", "true");
-          answer.append(caret);
           body.replaceChildren(answer);
           host.dataset.phase = "streaming";
         }
         const following = body.scrollHeight - body.scrollTop - body.clientHeight < 24;
-        const piece = document.createElement("span");
-        piece.textContent = message.text;
-        caret.before(piece);
+        reveal(text);
         if (following) body.scrollTop = body.scrollHeight;
         place();
       }
       if (message.done) {
         current.disconnect();
         port = null;
-        answer.textContent = answer.textContent.trim();
         host.dataset.phase = "done";
         body.setAttribute("aria-busy", "false");
         place();

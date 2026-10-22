@@ -117,13 +117,22 @@ async def exercise(browser_type):
         await evidence(page, f"{browser_type.name}-loading.png")
         await emit(page, {"text": "Obdurate means "})
         await state(page, "open", "streaming")
-        assert await page.evaluate("!!window.testShadow.querySelector('.caret')")
+        # Each character fades in on its own, starting transparent and tinted.
+        fading = await page.evaluate("""() => {
+          const spans = [...window.testShadow.querySelectorAll('.answer span')];
+          return {count: spans.length, animated: spans.every(span => span.getAnimations().length === 1),
+                  first: getComputedStyle(spans.at(-1)).opacity};
+        }""")
+        assert fading["count"] == len("Obdurate means") and fading["animated"] and float(fading["first"]) < 1, fading
         await emit(page, {"text": "stubbornly refusing to change your mind."})
         await evidence(page, f"{browser_type.name}-streaming.png")
         await emit(page, {"done": True})
         await state(page, "open", "done")
         assert await answer_text(page) == "Obdurate means stubbornly refusing to change your mind."
-        assert await page.evaluate("!window.testShadow.querySelector('.caret') && window.ports[0].disconnected")
+        assert await page.evaluate("window.ports[0].disconnected")
+        # Settled characters fold back into plain text.
+        await page.wait_for_function("!window.testShadow.querySelector('.answer span')", timeout=3000)
+        assert await answer_text(page) == "Obdurate means stubbornly refusing to change your mind."
         bounds = await in_viewport(page)
         word = await page.evaluate("document.querySelector('#copy b').getBoundingClientRect().toJSON()")
         assert bounds["top"] >= word["bottom"] or bounds["bottom"] <= word["top"], (bounds, word)
