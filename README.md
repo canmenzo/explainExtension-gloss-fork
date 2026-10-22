@@ -41,10 +41,14 @@ npm test
 3. Select the Explain icon on a page and choose **Use on this page**, then select text.
 4. Choose a Gemini Flash model in the extension popup and enter your Google AI Studio API key. The key and model choice stay in session storage and clear when the browser closes.
 
-Explain defaults to Gemini 3.8 Flash. The model menu also offers Gemini 3.5 Flash, 3.5 Flash-Lite, and 3.1 Flash-Lite. Explain calls the model directly; it does not perform Google Search. Google describes Gemini 2.5 API access as limited for new users and recommends current Flash models for new projects. Free access is limited to certain models and has account-specific rate limits. On Google's free tier, submitted content may be used to improve its products; its paid tier states that content is not used for this purpose. [Review Gemini API pricing and data terms](https://ai.google.dev/gemini-api/docs/pricing) and [create or manage a key in Google AI Studio](https://aistudio.google.com/apikey).
+Explain defaults to Gemini 3.8 Flash. The model menu also offers Gemini 3.6 Flash, 3.5 Flash-Lite, and 3.1 Flash-Lite. Explain calls the model directly; it does not perform Google Search. Google describes Gemini 2.5 API access as limited for new users and recommends current Flash models for new projects. Free access is limited to certain models and has account-specific rate limits. On Google's free tier, submitted content may be used to improve its products; its paid tier states that content is not used for this purpose. [Review Gemini API pricing and data terms](https://ai.google.dev/gemini-api/docs/pricing) and [create or manage a key in Google AI Studio](https://aistudio.google.com/apikey).
 
 Your selected text, nearby paragraph, page title, and API key go directly to Google's Gemini API. The page's HTML is not sent. Answers are rendered as plain text. The key remains in browser session memory and is cleared when the browser closes; no key or explanation is bundled with the extension. See the [privacy policy](PRIVACY.md).
 
 ## Upstream
 
-This repository began as a fork of [Nutlope/gloss](https://github.com/Nutlope/gloss), whose selection lens and Explain prompt informed this focused extension. The source checkout contained no `LICENSE`, `NOTICE`, or `COPYING` file; the upstream Git history is preserved in this repository and in the local backup branch `backup/pre-extension-20261019`.
+This repository began as a fork of [Nutlope/gloss](https://github.com/Nutlope/gloss), a Next.js reader app whose selection lens inspired this extension. Gloss has no license, so none of its code or prompt text ships here: the extension, Rust core, and Explain prompt were written for this project. Gloss's Git history is kept in this repository's history only.
+
+## License
+
+[MIT](LICENSE). This covers the code in this repository's current tree, not the upstream Gloss commits in its history.

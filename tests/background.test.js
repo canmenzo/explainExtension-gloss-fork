@@ -75,7 +75,7 @@ test("Rust parses provider authentication, quota and malformed response errors",
 
 test("key storage is session-scoped", async () => {
   const app = runtime();
-  assert.equal((await app.handle({ type: "save-key", key: "session-key", model: "gemini-3.5-flash" })).ok, true);
+  assert.equal((await app.handle({ type: "save-key", key: "session-key", model: "gemini-3.6-flash" })).ok, true);
   assert.equal(app.stored.geminiKey, "session-key");
-  assert.equal(app.stored.geminiModel, "gemini-3.5-flash");
+  assert.equal(app.stored.geminiModel, "gemini-3.6-flash");
 });

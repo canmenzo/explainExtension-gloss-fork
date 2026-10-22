@@ -23,7 +23,10 @@ api.storage.session.get(["geminiKey", "geminiModel"]).then((value) => {
   keyState.dataset.state = hasKey ? "ready" : "";
   settings.open = !hasKey;
   if (hasKey) input.placeholder = "Enter a replacement key";
-  else showStatus("Add your key below to get started.");
+  else {
+    showStatus("Works on this tab only. Add your key below first.");
+    input.focus();
+  }
 }).catch(() => {
   keyState.textContent = "Session unavailable";
   keyState.dataset.state = "error";

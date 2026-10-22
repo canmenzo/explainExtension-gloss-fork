@@ -112,6 +112,9 @@ async def exercise(browser_type):
         await state(page, "result", "answer")
         font = await page.evaluate("getComputedStyle(window.testShadow.querySelector('.answer')).fontFamily")
         assert "sans-serif" in font, font
+        assert await page.evaluate("getComputedStyle(window.testShadow.querySelector('.close')).fontFamily") == font
+        label, quote = await page.evaluate("['.quote-label','.quote-text'].map(s => getComputedStyle(window.testShadow.querySelector(s)).color)")
+        assert label != quote, (label, quote)
         await in_viewport(page, ".result")
         await evidence(page, f"{browser_type.name}-answer.png")
         await shadow_click(page, "Dismiss explanation")
@@ -122,6 +125,9 @@ async def exercise(browser_type):
         await state(page, "closed")
         assert await page.evaluate("getSelection().isCollapsed")
         await select_text(page)
+        await page.keyboard.press("Escape")
+        await state(page, "closed")
+        await select_text(page, pointer=False)
         await page.keyboard.press("Escape")
         await state(page, "closed")
         await select_text(page)
@@ -278,6 +284,8 @@ async def popup_fixture(browser_type):
         await page.goto("http://popup.test/popup.html")
         await expect(page.locator("details")).to_have_attribute("open", "")
         await expect(page.locator("#key-state")).to_contain_text("Setup needed")
+        await expect(page.locator("#status")).to_contain_text("this tab only")
+        await expect(page.locator("#api-key")).to_be_focused()
         height = await page.locator("main").evaluate("element => element.getBoundingClientRect().height")
         assert await page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         await evidence(page, f"{browser_type.name}-popup-setup.png", full_page=True)

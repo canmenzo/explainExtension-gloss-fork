@@ -15,7 +15,7 @@
     .surface{position:fixed;max-width:calc(100vw - 24px);background:#FFF;color:#202B3A;color-scheme:light;font:14px/1.5 ui-sans-serif,system-ui,sans-serif;border-radius:12px;box-shadow:0 0 0 1px #0000000d,0 4px 8px #00000008,0 16px 40px #0000001a;pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity 150ms cubic-bezier(.22,1,.36,1),transform 150ms cubic-bezier(.22,1,.36,1)}
     .surface.is-open{pointer-events:auto;opacity:1;transform:translateY(0);transition-duration:250ms}
     .surface[hidden]{display:none}
-    button{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:36px;border:0;border-radius:8px;padding:0 12px;background:#315DAD;color:#FFF;font:600 12px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;cursor:pointer;transition:background-color 150ms ease-out,transform 150ms ease-out}
+    button{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:36px;border:0;border-radius:8px;padding:0 12px;background:#315DAD;color:#FFF;font:600 12px/1 ui-sans-serif,system-ui,sans-serif;cursor:pointer;transition:background-color 150ms ease-out,transform 150ms ease-out}
     button:hover{background:#244B92}button:active{transform:scale(.96)}button:focus-visible{outline:2px solid #315DAD;outline-offset:3px}
     .box{display:flex;align-items:center;gap:4px;padding:4px}
     .explain{min-height:40px;background:#FFF;color:#202B3A;padding:0 12px 0 8px}.explain:hover{background:#EAF0FB}
@@ -25,7 +25,7 @@
     .result{display:flex;flex-direction:column;width:384px;max-height:calc(100vh - 24px);overflow:hidden}
     .header{display:flex;align-items:center;gap:8px;flex-shrink:0;padding:12px 12px 12px 16px}.header h2{flex:1;margin:0;font-size:14px;font-weight:600;line-height:24px}.header .mark{width:24px;height:24px}
     .quote{flex-shrink:0;min-height:0;margin:0 16px 16px;padding:12px;border-left:2px solid #315DAD;border-radius:0 4px 4px 0;background:#F8FAFC;overflow:hidden}
-    .quote-label{margin:0 0 4px;color:#59677A;font-size:12px;line-height:16px}.quote-text{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin:0;color:#59677A;font-size:12px;line-height:20px;overflow-wrap:anywhere}
+    .quote-label{margin:0 0 4px;color:#59677A;font-size:11px;font-weight:600;line-height:16px;letter-spacing:.04em;text-transform:uppercase}.quote-text{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin:0;color:#202B3A;font-size:13px;line-height:20px;overflow-wrap:anywhere}
     .body{min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 16px 16px;scrollbar-width:thin;scrollbar-color:#CDD6E4 transparent}
     .body:focus-visible{outline:2px solid #315DAD;outline-offset:-2px}.answer{margin:0;color:#202B3A;font-size:14px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
     .status{margin:0 0 16px;color:#59677A;font-size:12px;line-height:20px}.skeleton{display:grid;gap:8px;padding-bottom:8px}.skeleton span{height:8px;border-radius:4px;background:#EAF0FB}.skeleton span:nth-child(2){width:92%}.skeleton span:last-child{width:64%}
@@ -113,13 +113,14 @@
   function dismiss(clearSelection = false) {
     ++request;
     clearTimeout(timer);
-    dismissed = clearSelection;
     host.dataset.state = "closed";
     delete host.dataset.phase;
     delete host.dataset.placement;
     setVisible(box, false);
     setVisible(result, false);
     if (clearSelection) window.getSelection()?.removeAllRanges();
+    // Only suppress the old selection if the page kept it; a cleared selection means any new one is fresh.
+    dismissed = clearSelection && window.getSelection()?.isCollapsed === false;
   }
 
   function selectionInfo() {

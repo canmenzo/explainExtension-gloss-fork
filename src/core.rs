@@ -6,7 +6,7 @@ const SELECTION_LIMIT: usize = 12_000;
 const MODEL_LIMIT: usize = 100;
 const MODELS: [&str; 4] = [
     "gemini-3.8-flash",
-    "gemini-3.5-flash",
+    "gemini-3.6-flash",
     "gemini-3.5-flash-lite",
     "gemini-3.1-flash-lite",
 ];
@@ -82,7 +82,7 @@ fn request_value(
         return Err("Select some text first.");
     }
     let prompt = format!(
-        "Explain what the selected text means here in 2 to 4 concise sentences. If it names a person, organization, place, or work, identify it when clear. Unpack unusual phrasing or metaphor when present. Do not invent details.\n\nPage: {}\n\nNearby text:\n{}\n\nSelected text:\n{}",
+        "You help a reader understand a passage on a web page. In plain language and no more than four short sentences, say what the selected text means in its surrounding context. When it refers to someone or something specific, say who or what that is, but only if the context makes it clear. Spell out jargon, idioms, and figurative language. Stick to what the text supports; never guess at facts.\n\nPage: {}\n\nNearby text:\n{}\n\nSelected text:\n{}",
         clipped(title, 300),
         clipped(context, 5000),
         selection
