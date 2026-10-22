@@ -95,7 +95,7 @@
     const node = range?.commonAncestorContainer;
     const element = (node?.nodeType === Node.ELEMENT_NODE ? node : node?.parentElement) ?? document.activeElement;
     const block = element?.closest?.("p,li,blockquote,pre,h1,h2,h3,h4,h5,h6,td,th,dd,figcaption");
-    const nearby = block?.innerText || (typeof element?.value === "string" ? element.value : element?.innerText);
+    const nearby = block?.innerText || (typeof element?.value === "string" && element.type !== "password" ? element.value : element?.innerText);
     return { selection: text, context: (nearby || text).slice(0, 5000), title: document.title };
   }
 
