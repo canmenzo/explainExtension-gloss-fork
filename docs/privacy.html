@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Privacy policy: Explain</title>
+<meta name="description" content="Privacy policy for the Explain browser extension. No servers, no analytics. Only your selection, its paragraph and the page title go directly to Google Gemini, with your own key.">
+<link rel="canonical" href="https://explain.menzo.dev/privacy.html">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="icon-128.png">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#fbfcfe" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#10141b" media="(prefers-color-scheme: dark)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Explain">
+<meta property="og:title" content="Privacy policy: Explain">
+<meta property="og:description" content="No servers, no analytics. Your selection goes directly to Google Gemini with your own key, and nowhere else.">
+<meta property="og:url" content="https://explain.menzo.dev/privacy.html">
+<meta property="og:image" content="https://explain.menzo.dev/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Explain: a card beside a selected word explains it in plain language">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://explain.menzo.dev/og.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&amp;display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<nav class="pill" aria-label="Main">
+<a class="brand" href="./"><img src="icon-128.png" alt="" width="24" height="24">Explain</a>
+<div class="links"><a href="./#how">How it works</a><a href="./#privacy">Privacy</a><a href="./#install">Install</a><a href="./#faq">FAQ</a></div>
+<a class="btn sm" href="https://github.com/canmenzo/explainExtension/releases/latest">Download</a>
+</nav>
+<main id="main" class="doc">
+<p class="eyebrow">Privacy</p>
+<h1>Privacy policy</h1>
+<p class="meta">Effective October 22, 2026. This policy covers the Explain browser extension.</p>
+
+<p>Explain has no servers of its own. It does not collect analytics, telemetry or usage data, and it does not sell or share your data with anyone.</p>
+
+<h2>What Explain sends, and where</h2>
+<p>Explain sends data only when you select text, right-click and choose <strong>Explain</strong>. Each request goes directly from your browser to Google's Gemini API at <code>generativelanguage.googleapis.com</code>, and nowhere else. A request contains:</p>
+<ul>
+<li>the text you selected (up to 12,000 characters);</li>
+<li>the nearby text from the paragraph, list item, heading or table cell that contains the selection (up to 5,000 characters);</li>
+<li>the page title (up to 300 characters);</li>
+<li>the name of the Gemini model Explain uses (Gemini 3.8 Flash);</li>
+<li>your Gemini API key, which authenticates the request.</li>
+</ul>
+<p>Explain does not send the page address, the page's HTML, or anything from pages where you have not chosen Explain.</p>
+
+<h2>What Explain stores</h2>
+<p>Your API key is kept in the browser's extension session storage (<code>chrome.storage.session</code>). It stays in memory, is never written to disk by Explain, and is cleared when the browser closes. Explain stores nothing else: selections and explanations are shown on the page and discarded.</p>
+
+<h2>Permissions</h2>
+<ul>
+<li><code>contextMenus</code>: add Explain to the right-click menu when text is selected.</li>
+<li><code>activeTab</code> and <code>scripting</code>: show the explanation card on the current tab, only after you choose Explain from that menu.</li>
+<li><code>storage</code>: keep your API key for the browser session.</li>
+<li>Access to <code>generativelanguage.googleapis.com</code>: send Explain requests to Google Gemini.</li>
+</ul>
+
+<h2>Google's terms</h2>
+<p>Google processes each request under its own terms, using your API key and account. On Google's free tier, submitted content may be used to improve Google's products; Google states that paid tier content is not used for this purpose. See the <a href="https://ai.google.dev/gemini-api/terms">Gemini API Additional Terms of Service</a> and <a href="https://policies.google.com/privacy">Google's Privacy Policy</a>.</p>
+
+<h2>Contact</h2>
+<p>Questions or concerns: open an issue at <a href="https://github.com/canmenzo/explainExtension/issues">github.com/canmenzo/explainExtension/issues</a>.</p>
+</main>
+<footer><div class="wrap"><div class="fb"><a class="brand" href="./"><img src="icon-128.png" alt="" width="24" height="24">Explain</a><p>Plain explanations for what you read. MIT licensed. Made by <a href="https://menzo.dev">menzo</a>.</p></div><nav aria-label="Footer"><a href="https://github.com/canmenzo/explainExtension">GitHub</a><a href="https://github.com/canmenzo/explainExtension/releases/latest">Releases</a><a href="privacy.html" aria-current="page">Privacy</a><a href="https://babil.menzo.dev">Babil</a><a href="https://hammurabi.menzo.dev">Hammurabi</a><a href="https://menzo.dev">menzo.dev</a></nav></div></footer>
+</body>
+</html>
