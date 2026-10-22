@@ -43,7 +43,7 @@ npm test
 
 Explain defaults to Gemini 3.8 Flash. The model menu also offers Gemini 3.5 Flash, 3.5 Flash-Lite, and 3.1 Flash-Lite. Explain calls the model directly; it does not perform Google Search. Google describes Gemini 2.5 API access as limited for new users and recommends current Flash models for new projects. Free access is limited to certain models and has account-specific rate limits. On Google's free tier, submitted content may be used to improve its products; its paid tier states that content is not used for this purpose. [Review Gemini API pricing and data terms](https://ai.google.dev/gemini-api/docs/pricing) and [create or manage a key in Google AI Studio](https://aistudio.google.com/apikey).
 
-Your selected text, nearby paragraph, page title, and API key go directly to Google's Gemini API. The page's HTML is not sent. Answers are rendered as plain text. The key remains in browser session memory and is cleared when the browser closes; no key or explanation is bundled with the extension.
+Your selected text, nearby paragraph, page title, and API key go directly to Google's Gemini API. The page's HTML is not sent. Answers are rendered as plain text. The key remains in browser session memory and is cleared when the browser closes; no key or explanation is bundled with the extension. See the [privacy policy](PRIVACY.md).
 
 ## Upstream
 
