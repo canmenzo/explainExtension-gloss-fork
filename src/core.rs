@@ -82,7 +82,7 @@ fn request_value(
         return Err("Select some text first.");
     }
     let prompt = format!(
-        "You help a reader understand a passage on a web page. In plain language and no more than four short sentences, say what the selected text means in its surrounding context. When it refers to someone or something specific, say who or what that is, but only if the context makes it clear. Spell out jargon, idioms, and figurative language. Stick to what the text supports; never guess at facts.\n\nPage: {}\n\nNearby text:\n{}\n\nSelected text:\n{}",
+        "You help a reader understand a passage on a web page. In plain language and two or three short sentences, explain or summarize what the selected text means in its surrounding context. When it refers to someone or something specific, say who or what that is, but only if the context makes it clear. Spell out jargon, idioms, and figurative language. Stick to what the text supports; never guess at facts. Reply in plain text without Markdown.\n\nPage: {}\n\nNearby text:\n{}\n\nSelected text:\n{}",
         clipped(title, 300),
         clipped(context, 5000),
         selection
@@ -90,7 +90,11 @@ fn request_value(
     Ok(json!({
         "model": model,
         "contents": [{ "parts": [{ "text": prompt }] }],
-        "generationConfig": { "temperature": 0.4, "maxOutputTokens": 300 }
+        "generationConfig": {
+            "temperature": 0.4,
+            "maxOutputTokens": 2048,
+            "thinkingConfig": { "thinkingLevel": "low" }
+        }
     }))
 }
 
@@ -126,6 +130,33 @@ pub unsafe extern "C" fn build_request(
     }
 }
 
+// Thinking models can return thought parts; only the answer text is shown.
+fn answer_text(parsed: &Value) -> String {
+    parsed["candidates"][0]["content"]["parts"]
+        .as_array()
+        .map(|parts| {
+            parts
+                .iter()
+                .filter(|part| part["thought"] != true)
+                .filter_map(|part| part["text"].as_str())
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+fn chunk_value(data: &str) -> Value {
+    let Ok(parsed) = serde_json::from_str::<Value>(data) else {
+        return json!({ "error": "Google Gemini returned an unreadable response." });
+    };
+    if let Some(message) = parsed["error"]["message"].as_str() {
+        return json!({ "error": message });
+    }
+    if parsed["promptFeedback"]["blockReason"].is_string() {
+        return json!({ "error": "Google Gemini declined to explain this selection." });
+    }
+    json!({ "text": answer_text(&parsed) })
+}
+
 fn response_value(status: u16, body: &str) -> Value {
     let parsed: Value = match serde_json::from_str(body) {
         Ok(value) => value,
@@ -142,15 +173,7 @@ fn response_value(status: u16, body: &str) -> Value {
         };
         return json!({ "error": if error.is_empty() { format!("Google Gemini returned {status}.") } else { error.to_string() } });
     }
-    let answer = parsed["candidates"][0]["content"]["parts"]
-        .as_array()
-        .map(|parts| {
-            parts
-                .iter()
-                .filter_map(|part| part["text"].as_str())
-                .collect::<String>()
-        })
-        .unwrap_or_default();
+    let answer = answer_text(&parsed);
     let answer = answer.trim();
     if answer.is_empty() {
         json!({ "error": "Google Gemini returned no explanation." })
@@ -178,6 +201,23 @@ pub unsafe extern "C" fn parse_response(
         output,
         &response_value(status.min(u16::MAX as u32) as u16, body),
     )
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn parse_chunk(
+    data_pointer: *const u8,
+    data_length: usize,
+    output_pointer: *mut u8,
+    output_capacity: usize,
+) -> usize {
+    let output = slice::from_raw_parts_mut(output_pointer, output_capacity);
+    let Some(data) = input(data_pointer, data_length) else {
+        return write(
+            output,
+            &json!({ "error": "Google Gemini returned an unreadable response." }),
+        );
+    };
+    write(output, &chunk_value(data))
 }
 
 #[cfg(test)]
@@ -215,7 +255,8 @@ mod tests {
         let prompt = payload["contents"][0]["parts"][0]["text"].as_str().unwrap();
         assert_eq!(prompt.matches('猫').count(), 5000);
         assert!(prompt.contains("selected \"quoted\" text"));
-        assert_eq!(payload["generationConfig"]["maxOutputTokens"], 300);
+        assert_eq!(payload["generationConfig"]["maxOutputTokens"], 2048);
+        assert_eq!(payload["generationConfig"]["thinkingConfig"]["thinkingLevel"], "low");
         assert!(request_value("bad-model", "", "", "word").is_err());
         assert!(request_value("gemini-3.8-flash", "", "", " ").is_err());
     }
@@ -249,5 +290,16 @@ mod tests {
             response_value(500, r#"{"error":{"message":"Service unavailable"}}"#)["error"],
             "Service unavailable"
         );
+    }
+
+    #[test]
+    fn parses_stream_chunks_without_thoughts() {
+        assert_eq!(
+            chunk_value(r#"{"candidates":[{"content":{"parts":[{"text":"plan","thought":true},{"text":" A word"}]}}]}"#)["text"],
+            " A word"
+        );
+        assert_eq!(chunk_value(r#"{"candidates":[{"finishReason":"STOP"}]}"#)["text"], "");
+        assert!(chunk_value(r#"{"promptFeedback":{"blockReason":"SAFETY"}}"#)["error"].is_string());
+        assert!(chunk_value("not json")["error"].is_string());
     }
 }

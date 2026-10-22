@@ -9,23 +9,31 @@ EVIDENCE = ROOT / "dist" / "test-evidence"
 HOSTILE = '<img src=x onerror="window.pwned=true">'
 HOST = "[aria-label='Explain selection']"
 
+# Stands in for the extension runtime: the context menu's message and the streaming port.
+RUNTIME_STUB = """() => {
+  const attach = Element.prototype.attachShadow;
+  Element.prototype.attachShadow = function(options) {
+    const shadow = attach.call(this, options);
+    if (this.getAttribute('aria-label') === 'Explain selection') window.testShadow = shadow;
+    return shadow;
+  };
+  window.ports = [];
+  window.chrome = {runtime:{
+    onMessage:{addListener(fn){window.menu = (selection = '') => fn({type:'explain', selection});}},
+    connect({name}) {
+      const port = {name, posted:[], listeners:[], drops:[], disconnected:false,
+        postMessage(message){port.posted.push(message);}, disconnect(){port.disconnected = true;},
+        onMessage:{addListener(fn){port.listeners.push(fn);}}, onDisconnect:{addListener(fn){port.drops.push(fn);}},
+        emit(message){port.listeners.forEach(fn => fn(message));}, drop(){port.drops.forEach(fn => fn());}};
+      window.ports.push(port);
+      return port;
+    }}};
+}"""
+
 
 async def evidence(page, name, full_page=False):
     await page.wait_for_timeout(300)
     await page.screenshot(path=str(EVIDENCE / name), full_page=full_page)
-
-
-async def visible_quote(page):
-    bounds = await page.evaluate("""() => {
-      const text = window.testShadow.querySelector('.quote-text').getBoundingClientRect();
-      const quote = window.testShadow.querySelector('.quote').getBoundingClientRect();
-      const body = window.testShadow.querySelector('.body').getBoundingClientRect();
-      return {height:text.height,top:text.top,bottom:text.bottom,
-        quoteTop:quote.top,quoteBottom:quote.bottom,bodyHeight:body.height};
-    }""")
-    assert bounds["height"] >= 16, bounds
-    assert bounds["top"] >= bounds["quoteTop"] and bounds["bottom"] <= bounds["quoteBottom"], bounds
-    assert bounds["bodyHeight"] >= 20, bounds
 
 
 async def state(page, value, phase=None):
@@ -34,18 +42,24 @@ async def state(page, value, phase=None):
         await expect(page.locator(HOST)).to_have_attribute("data-phase", phase)
 
 
-async def select_text(page, target="copy", pointer=True):
-    await page.evaluate("""({id,pointer}) => {
-      const target = document.getElementById(id);
-      if (pointer) target.dispatchEvent(new PointerEvent('pointerdown', {bubbles:true}));
+async def select(page, target="copy"):
+    await page.evaluate("""id => {
       const range = document.createRange();
-      range.selectNodeContents(target.querySelector('b'));
-      const selection = getSelection();
-      selection.removeAllRanges(); selection.addRange(range);
-      document.dispatchEvent(new Event('selectionchange'));
-      if (pointer) target.dispatchEvent(new PointerEvent('pointerup', {bubbles:true}));
-    }""", {"id": target, "pointer": pointer})
-    await state(page, "actions")
+      range.selectNodeContents(document.getElementById(id).querySelector('b'));
+      getSelection().removeAllRanges();
+      getSelection().addRange(range);
+    }""", target)
+
+
+async def explain(page, target="copy", fallback=""):
+    if target:
+        await select(page, target)
+    await page.evaluate("text => window.menu(text)", fallback)
+    await state(page, "open", "loading")
+
+
+async def emit(page, message, index=-1):
+    await page.evaluate("({message,index}) => window.ports.at(index).emit(message)", {"message": message, "index": index})
 
 
 async def shadow_click(page, label):
@@ -59,20 +73,26 @@ async def shadow_click(page, label):
     await page.mouse.click(**point)
 
 
-async def resolve_request(page, response, index=-1):
-    await page.evaluate("({response,index}) => window.pending.at(index).resolve(response)", {"response": response, "index": index})
-
-
-async def in_viewport(page, selector):
+async def in_viewport(page):
     await page.wait_for_timeout(280)
-    bounds = await page.evaluate("""selector => {
-      const rect = window.testShadow.querySelector(selector).getBoundingClientRect();
+    bounds = await page.evaluate("""() => {
+      const rect = window.testShadow.querySelector('.card').getBoundingClientRect();
       return {left:rect.left,top:rect.top,right:rect.right,bottom:rect.bottom,
         viewportWidth:innerWidth,viewportHeight:innerHeight};
-    }""", selector)
+    }""")
     assert bounds["left"] >= 0 and bounds["top"] >= 0, bounds
     assert bounds["right"] <= bounds["viewportWidth"] + 1, bounds
     assert bounds["bottom"] <= bounds["viewportHeight"] + 1, bounds
+    return bounds
+
+
+async def answer_text(page):
+    return await page.evaluate("window.testShadow.querySelector('.answer')?.textContent")
+
+
+async def running_animations(page):
+    return await page.evaluate("""() => [...window.testShadow.querySelectorAll('*')].flatMap(
+      item => item.getAnimations()).filter(animation => animation.playState === 'running').length""")
 
 
 async def exercise(browser_type):
@@ -81,192 +101,138 @@ async def exercise(browser_type):
     page = await context.new_page()
     try:
         await page.set_content('''<style>body{margin:0;font:18px/1.7 system-ui;background:#f7f7f4;color:#252823}main{max-width:760px;margin:64px auto;padding:0 24px}p{margin:0 0 24px}
-          #lower{position:fixed;bottom:2px;margin:0 14px}</style>
+          #lower{position:fixed;bottom:2px;margin:0 14px}</style><title>Notes on language</title>
           <main><h1 style="font-size:28px;line-height:1.2">Notes on language</h1><p id="copy">The <b>obdurate</b> witness held her ground. Even after hours of questioning, she refused to change her account of what had happened that evening.</p><p id="other-copy">An <b>obdurate</b> committee rejected the proposal. Context helps reveal whether a word describes a person, a group, or an attitude.</p>
-          <p id="lower">A <b>second selection</b> at the lower edge.</p></main>''')
-        await page.evaluate("""() => {
-          const attach = Element.prototype.attachShadow;
-          Element.prototype.attachShadow = function(options) {
-            const shadow = attach.call(this, options);
-            if (this.getAttribute('aria-label') === 'Explain selection') window.testShadow = shadow;
-            return shadow;
-          };
-          window.pending = [];
-          window.chrome = {runtime:{sendMessage: message => new Promise((resolve,reject) => {
-            window.pending.push({message,resolve,reject});
-          })}};
-        }""")
+          <p id="lower">A <b>second selection</b> at the lower edge.</p><input id="field" value="A field with tacit approval in it"></main>''')
+        await page.evaluate(RUNTIME_STUB)
         await page.add_script_tag(path=str(ROOT / "extension" / "content.js"))
         assert await page.locator(HOST).evaluate("host => host.shadowRoot") is None
-        await select_text(page)
-        assert await page.evaluate("document.activeElement.tagName") == "BODY"
-        await page.keyboard.press("Tab")
-        assert await page.evaluate("window.testShadow.activeElement?.getAttribute('aria-label')") == "Explain selected text"
-        await page.keyboard.press("Enter")
-        await state(page, "result", "loading")
-        assert await page.evaluate("window.testShadow.querySelector('.body').getAttribute('aria-busy')") == "true"
-        assert await page.evaluate("window.pending.length") == 1
-        assert await page.evaluate("window.pending[0].message.selection") == "obdurate"
-        await evidence(page, f"{browser_type.name}-loading.png")
-        await resolve_request(page, {"answer": "Obdurate means stubbornly refusing to change an opinion or decision. Here, it describes a witness who remains firm despite pressure to give a different account."})
-        await state(page, "result", "answer")
-        font = await page.evaluate("getComputedStyle(window.testShadow.querySelector('.answer')).fontFamily")
-        assert "sans-serif" in font, font
-        assert await page.evaluate("getComputedStyle(window.testShadow.querySelector('.close')).fontFamily") == font
-        label, quote = await page.evaluate("['.quote-label','.quote-text'].map(s => getComputedStyle(window.testShadow.querySelector(s)).color)")
-        assert label != quote, (label, quote)
-        await in_viewport(page, ".result")
-        await evidence(page, f"{browser_type.name}-answer.png")
-        await shadow_click(page, "Dismiss explanation")
-        await state(page, "closed")
 
-        await select_text(page)
+        # Streaming answer beside the selection.
+        await explain(page)
+        assert await page.evaluate("document.activeElement.tagName") == "BODY"
+        payload = await page.evaluate("window.ports[0].posted[0]")
+        assert payload["selection"] == "obdurate" and "witness" in payload["context"] and payload["title"] == "Notes on language", payload
+        assert "obdurate" in await page.evaluate("window.testShadow.querySelector('.title').textContent")
+        await evidence(page, f"{browser_type.name}-loading.png")
+        await emit(page, {"text": "Obdurate means "})
+        await state(page, "open", "streaming")
+        assert await page.evaluate("!!window.testShadow.querySelector('.caret')")
+        await emit(page, {"text": "stubbornly refusing to change your mind."})
+        await evidence(page, f"{browser_type.name}-streaming.png")
+        await emit(page, {"done": True})
+        await state(page, "open", "done")
+        assert await answer_text(page) == "Obdurate means stubbornly refusing to change your mind."
+        assert await page.evaluate("!window.testShadow.querySelector('.caret') && window.ports[0].disconnected")
+        bounds = await in_viewport(page)
+        word = await page.evaluate("document.querySelector('#copy b').getBoundingClientRect().toJSON()")
+        assert bounds["top"] >= word["bottom"] or bounds["bottom"] <= word["top"], (bounds, word)
+        assert abs((bounds["left"] + bounds["right"]) / 2 - (word["left"] + word["right"]) / 2) < 60, (bounds, word)
+        font = await page.evaluate("getComputedStyle(window.testShadow.querySelector('.answer')).fontFamily")
+        assert "sans-serif" in font and await page.evaluate("getComputedStyle(window.testShadow.querySelector('.close')).fontFamily") == font
+        await evidence(page, f"{browser_type.name}-answer.png")
+
+        # Dismissal: close button, Escape, outside click. Clicks inside the card keep it open.
         await shadow_click(page, "Dismiss explanation")
         await state(page, "closed")
-        assert await page.evaluate("getSelection().isCollapsed")
-        await select_text(page)
+        await explain(page)
+        await page.evaluate("window.testShadow.querySelector('.body').dispatchEvent(new PointerEvent('pointerdown', {bubbles:true, composed:true}))")
+        await state(page, "open")
         await page.keyboard.press("Escape")
         await state(page, "closed")
-        await select_text(page, pointer=False)
-        await page.keyboard.press("Escape")
-        await state(page, "closed")
-        await select_text(page)
+        assert await page.evaluate("window.ports.at(-1).disconnected")
+        await explain(page)
         await page.mouse.click(850, 40)
         await state(page, "closed")
-
-        await page.evaluate("""() => {
-          const controls = document.createElement('div');
-          controls.id = 'page-controls';
-          controls.innerHTML = '<button id="page-button">Page action</button><a id="page-link" href="#page">Page link</a><input id="page-input"><div id="page-editor" contenteditable="true">Editable text</div>';
-          document.querySelector('main').append(controls);
-          document.querySelector('#page-button').addEventListener('click', () => window.pageClicked = true);
-        }""")
-        for selector in ("#page-button", "#page-link", "#page-input", "#page-editor"):
-            await select_text(page)
-            count = await page.evaluate("window.pending.length")
-            await page.locator(selector).focus()
-            await page.keyboard.press("Enter")
-            await state(page, "actions")
-            assert await page.evaluate("window.pending.length") == count, selector
-        assert await page.evaluate("window.pageClicked")
-        await page.evaluate("document.activeElement.blur();document.getElementById('page-controls').hidden=true")
-        await page.keyboard.press("Escape")
-
-        await page.set_viewport_size({"width": 320, "height": 480})
-        await select_text(page, "lower")
-        await in_viewport(page, ".box")
-        await evidence(page, f"{browser_type.name}-selection-narrow.png")
-        await page.keyboard.press("Enter")
-        await state(page, "result", "loading")
-        await in_viewport(page, ".result")
-        await resolve_request(page, {"answer": "A lengthy explanation. " * 400})
-        await state(page, "result", "answer")
-        await in_viewport(page, ".result")
-        scrolling = await page.evaluate("""() => {
-          const body = [...window.testShadow.querySelectorAll('.result *')].find(
-            item => item.scrollHeight > item.clientHeight + 20 && ['auto','scroll'].includes(getComputedStyle(item).overflowY));
-          if (!body) return false;
-          body.scrollTop = body.scrollHeight;
-          return body.scrollTop > 0;
-        }""")
-        assert scrolling, "Long answers must scroll inside the viewport"
-        await visible_quote(page)
-        await evidence(page, f"{browser_type.name}-long-answer-narrow.png")
-        await page.set_viewport_size({"width": 320, "height": 300})
-        await in_viewport(page, ".result")
-        await visible_quote(page)
-        await evidence(page, f"{browser_type.name}-long-answer-short-viewport.png")
-        await page.set_viewport_size({"width": 320, "height": 480})
-        await page.keyboard.press("Escape")
+        await emit(page, {"text": "Stale dismissed answer"})
+        await page.wait_for_timeout(180)
         await state(page, "closed")
+        assert not await page.evaluate("window.testShadow.querySelector('.card').textContent.includes('Stale')")
 
-        await select_text(page)
-        await page.keyboard.press("Enter")
-        await state(page, "result", "loading")
-        await resolve_request(page, {"error": "Request limit reached. Try again."})
-        await state(page, "result", "error")
+        # A newer Explain replaces an older stream.
+        await explain(page)
+        old = await page.evaluate("window.ports.length - 1")
+        await explain(page, "other-copy")
+        assert await page.evaluate(f"window.ports[{old}].disconnected")
+        assert "proposal" in await page.evaluate("window.ports.at(-1).posted[0].context")
+        await emit(page, {"text": "Stale previous selection"}, old)
+        await page.wait_for_timeout(180)
+        await state(page, "open", "loading")
+        await emit(page, {"text": "A committee that will not reconsider."})
+        await emit(page, {"done": True})
+        await state(page, "open", "done")
+        assert await answer_text(page) == "A committee that will not reconsider."
+
+        # Errors offer Try again with the same selection; a dropped port is an error too.
+        await explain(page)
+        await emit(page, {"error": "Google rate or usage limit reached. Try again later."})
+        await state(page, "open", "error")
         await evidence(page, f"{browser_type.name}-error.png")
         await shadow_click(page, "Try again")
-        await state(page, "result", "loading")
-        await resolve_request(page, {"answer": HOSTILE})
-        await state(page, "result", "answer")
-        assert await page.evaluate("window.testShadow.querySelector('.answer').textContent") == HOSTILE
+        await state(page, "open", "loading")
+        assert await page.evaluate("window.ports.at(-1).posted[0].selection") == "obdurate"
+        await emit(page, {"text": HOSTILE})
+        await emit(page, {"done": True})
+        await state(page, "open", "done")
+        assert await answer_text(page) == HOSTILE
         assert await page.evaluate("window.pwned") is None
+        await explain(page)
+        await page.evaluate("window.ports.at(-1).drop()")
+        await state(page, "open", "error")
+        await page.keyboard.press("Escape")
 
-        await select_text(page)
-        await page.keyboard.press("Enter")
-        await state(page, "result", "loading")
-        old_request = await page.evaluate("window.pending.length - 1")
-        await page.mouse.click(300, 20)
-        await state(page, "closed")
-        await resolve_request(page, {"answer": "Stale outside-dismissed answer"}, old_request)
-        await page.wait_for_timeout(180)
-        await state(page, "closed")
+        # Menu text is used when the page selection is not readable, such as inside a text field.
+        await page.evaluate("getSelection().removeAllRanges(); document.getElementById('field').focus(); document.getElementById('field').setSelectionRange(13, 27)")
+        await explain(page, None, "tacit approval")
+        sent = await page.evaluate("window.ports.at(-1).posted[0]")
+        assert sent["selection"] == "tacit approval" and "field with tacit" in sent["context"], sent
+        await in_viewport(page)
+        await page.keyboard.press("Escape")
+        await page.evaluate("document.activeElement.blur()")
 
-        await select_text(page)
-        await page.keyboard.press("Enter")
-        await state(page, "result", "loading")
-        old_request = await page.evaluate("window.pending.length - 1")
+        # Long answers scroll inside a card that stays on screen, even in small viewports.
+        await page.set_viewport_size({"width": 320, "height": 480})
+        await explain(page, "lower")
+        await in_viewport(page)
+        await emit(page, {"text": "A lengthy explanation. " * 200})
+        await state(page, "open", "streaming")
+        await in_viewport(page)
+        assert await page.evaluate("""() => {
+          const body = window.testShadow.querySelector('.body');
+          return body.scrollHeight > body.clientHeight + 20 && body.scrollTop > 0;
+        }"""), "Long answers must scroll and follow the stream"
+        await emit(page, {"done": True})
+        await page.set_viewport_size({"width": 320, "height": 300})
+        await in_viewport(page)
+        await evidence(page, f"{browser_type.name}-long-answer-short-viewport.png")
+        await page.set_viewport_size({"width": 900, "height": 700})
         await page.keyboard.press("Escape")
         await state(page, "closed")
-        await resolve_request(page, {"answer": "Stale dismissed answer"}, old_request)
-        await page.wait_for_timeout(180)
-        await state(page, "closed")
-        assert not await page.evaluate("window.testShadow.querySelector('.result').textContent.includes('Stale dismissed answer')")
 
-        await select_text(page)
-        await page.keyboard.press("Enter")
-        await state(page, "result", "loading")
-        old_request = await page.evaluate("window.pending.length - 1")
-        await select_text(page, "lower")
-        await page.keyboard.press("Enter")
-        await state(page, "result", "loading")
-        await resolve_request(page, {"answer": "Stale previous selection"}, old_request)
-        await page.wait_for_timeout(180)
-        await state(page, "result", "loading")
-        await resolve_request(page, {"answer": "The new selection wins."})
-        await state(page, "result", "answer")
-        assert await page.evaluate("window.testShadow.querySelector('.answer').textContent") == "The new selection wins."
-
-        await select_text(page)
-        await page.keyboard.press("Enter")
-        await state(page, "result", "loading")
-        old_request = await page.evaluate("window.pending.length - 1")
-        await select_text(page, "other-copy", pointer=False)
-        await page.keyboard.press("Enter")
-        await state(page, "result", "loading")
-        assert await page.evaluate("window.pending.at(-1).message.selection") == "obdurate"
-        assert "proposal" in await page.evaluate("window.pending.at(-1).message.context")
-        await resolve_request(page, {"answer": "Stale same-word context"}, old_request)
-        await page.wait_for_timeout(180)
-        await state(page, "result", "loading")
-        await resolve_request(page, {"answer": "A committee that refuses to reconsider."})
-        await state(page, "result", "answer")
-        await select_text(page)
-        await page.keyboard.press("Enter")
-        await state(page, "result", "loading")
-        await page.evaluate("window.pending.at(-1).reject(new Error('Disconnected'))")
-        await state(page, "result", "error")
-        await shadow_click(page, "Dismiss explanation")
-        await state(page, "closed")
-
+        # Reduced motion: no running animations while loading or streaming.
         await page.emulate_media(reduced_motion="reduce")
-        await select_text(page)
-        animations = await page.evaluate("""() => [...window.testShadow.querySelectorAll('*')].flatMap(
-          item => item.getAnimations()).filter(animation => animation.playState === 'running').length""")
-        assert animations == 0, "Reduced motion must suppress selection reveal animations"
-        await evidence(page, f"{browser_type.name}-reduced-motion.png")
-        await page.keyboard.press("Enter")
-        await state(page, "result", "loading")
-        assert await page.evaluate("""() => [...window.testShadow.querySelectorAll('*')].every(
-          item => item.getAnimations().every(animation => animation.playState !== 'running'))""")
-        await evidence(page, f"{browser_type.name}-reduced-motion-loading.png")
+        await explain(page)
+        assert await running_animations(page) == 0
+        await emit(page, {"text": "Calm text."})
+        await state(page, "open", "streaming")
+        assert await running_animations(page) == 0
         await page.keyboard.press("Escape")
-        await state(page, "closed")
+        await page.emulate_media(reduced_motion="no-preference")
+
+        # Injecting again is a no-op; a reloaded extension replaces the old card.
+        await page.add_script_tag(path=str(ROOT / "extension" / "content.js"))
+        assert await page.locator(HOST).count() == 1
+        await page.evaluate("window.explainListening = false")
+        await page.add_script_tag(path=str(ROOT / "extension" / "content.js"))
+        assert await page.locator(HOST).count() == 1
+        await explain(page)
+        await emit(page, {"text": "Still works."})
+        await state(page, "open", "streaming")
+
         other = await context.new_page()
         await other.set_content("<p>Another tab.</p>")
         assert await other.locator(HOST).count() == 0
-        print(f"PASS {browser_type.name}: selection keyboard, viewport, scrolling, retry, stale requests, reduced motion")
+        print(f"PASS {browser_type.name}: streaming card, placement, dismissal, stale streams, retry, fallback text, scrolling, reduced motion")
     finally:
         await context.close()
         await browser.close()
@@ -279,24 +245,19 @@ async def popup_fixture(browser_type):
         async def serve(route):
             await route.fulfill(path=str(ROOT / "extension" / route.request.url.rsplit("/", 1)[-1]))
         await page.route("http://popup.test/*", serve)
-        await page.add_init_script("""window.pending=[];window.chrome={storage:{session:{get:async()=>({})}},
+        await page.add_init_script("""window.pending=[];window.chrome={storage:{session:{get:async()=>({}),set:async()=>{}}},
           runtime:{sendMessage:message=>new Promise((resolve,reject)=>window.pending.push({message,resolve,reject}))}};""")
         await page.goto("http://popup.test/popup.html")
-        await expect(page.locator("details")).to_have_attribute("open", "")
-        await expect(page.locator("#key-state")).to_contain_text("Setup needed")
-        await expect(page.locator("#status")).to_contain_text("this tab only")
+        await expect(page.locator("#key-state")).to_contain_text("Add your key")
         await expect(page.locator("#api-key")).to_be_focused()
+        await expect(page.locator(".how")).to_contain_text("Right-click")
         height = await page.locator("main").evaluate("element => element.getBoundingClientRect().height")
-        # Chrome caps popups at 600px; leave room for the 24px validation message.
+        # Chrome caps popups at 600px; leave room for the validation message.
         assert height <= 576, height
-        assert await page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         await evidence(page, f"{browser_type.name}-popup-setup.png", full_page=True)
         # Chrome measures popups from a tiny initial viewport; the layout must not shrink with it.
         await page.set_viewport_size({"width": 160, "height": 600})
         assert await page.locator("body").evaluate("element => element.getBoundingClientRect().width") == 336
-        for selector in ("#api-key", "#toggle-key", "#model", "#enable", "#key-form .save"):
-            bounds = await page.locator(selector).bounding_box()
-            assert bounds and bounds["x"] >= 0 and bounds["x"] + bounds["width"] <= 337, (selector, bounds)
         await page.set_viewport_size({"width": 336, "height": 600})
         save = page.locator("#key-form .save")
         await save.click()
@@ -308,37 +269,29 @@ async def popup_fixture(browser_type):
         await page.get_by_role("button", name="Show API key").click()
         await expect(page.locator("#api-key")).to_have_attribute("type", "text")
         await page.get_by_role("button", name="Hide API key").click()
-        await expect(page.locator("#api-key")).to_have_attribute("type", "password")
         await save.click()
         await expect(save).to_be_disabled()
         await expect(page.locator("#key-form")).to_have_attribute("aria-busy", "true")
-        await resolve_request(page, {"ok": True})
-        await expect(page.locator("#status")).to_contain_text("Key saved for this browser session.")
+        await page.evaluate("window.pending.at(-1).resolve({ok:true})")
+        await expect(page.locator("#status")).to_contain_text("right-click")
         await expect(save).to_be_enabled()
         await expect(page.locator("#api-key")).to_have_value("")
-        await expect(page.locator("#key-state")).to_contain_text("Key saved for this session")
+        await expect(page.locator("#api-key")).to_have_attribute("type", "password")
+        await expect(page.locator("#key-state")).to_contain_text("Ready")
+        await evidence(page, f"{browser_type.name}-popup-saved.png")
         await page.locator("#api-key").fill("fixture-test-key")
         await save.click()
-        await resolve_request(page, {"error": "Storage unavailable"})
+        await page.evaluate("window.pending.at(-1).resolve({error:'Storage unavailable'})")
         await expect(page.locator("#status")).to_contain_text("Could not save the key")
-        await expect(save).to_be_enabled()
-        await evidence(page, f"{browser_type.name}-popup-error.png")
-        enable = page.locator("#enable")
-        await enable.click()
-        await expect(enable).to_be_disabled()
-        await resolve_request(page, {"ok": True})
-        await expect(page.locator("#status")).to_contain_text("Ready.")
-        await expect(enable).to_be_enabled()
-        await enable.click()
+        await page.locator("#api-key").fill("fixture-test-key")
+        await save.click()
         await page.evaluate("window.pending.at(-1).reject(new Error('Disconnected'))")
-        await expect(enable).to_be_enabled()
-        await expect(page.locator("#status")).not_to_contain_text("Connecting Explain")
+        await expect(save).to_be_enabled()
+        await expect(page.locator("#status")).to_contain_text("Reopen Explain")
         await page.emulate_media(reduced_motion="reduce")
-        await page.locator("summary").click()
-        await page.locator("summary").click()
         await page.get_by_role("button", name="Show API key").click()
         assert await page.evaluate("document.getAnimations().filter(animation => animation.playState === 'running').length") == 0
-        print(f"PASS {browser_type.name}: popup setup ({height:.0f}px), validation, visibility, busy, errors, reduced motion")
+        print(f"PASS {browser_type.name}: popup setup ({height:.0f}px), width, validation, save, errors, reduced motion")
     finally:
         await browser.close()
 
@@ -356,20 +309,27 @@ async def chromium_extension_smoke(playwright):
             popup = await context.new_page()
             await popup.goto(f"chrome-extension://{extension_id}/popup.html")
             await popup.get_by_role("heading", name="Explain", exact=True).wait_for()
-            await expect(popup.locator("details")).to_have_attribute("open", "")
             await popup.locator("#api-key").fill("session-test-key")
             await popup.get_by_role("button", name="Save for this session").click()
-            await popup.get_by_text("Key saved for this browser session.", exact=True).wait_for()
+            await expect(popup.locator("#status")).to_contain_text("right-click")
             assert await popup.evaluate("chrome.storage.session.get(['geminiKey','geminiModel'])") == {
                 "geminiKey": "session-test-key", "geminiModel": "gemini-3.8-flash"}
-            message_result = await popup.evaluate("chrome.runtime.sendMessage({type:'explain',selection:'   '})")
-            assert message_result["error"] == "Select some text first."
+            stream = """selection => new Promise(resolve => {
+              const port = chrome.runtime.connect({name: 'explain'});
+              const received = [];
+              port.onMessage.addListener(message => {
+                received.push(message);
+                if (message.done || message.error) resolve(received);
+              });
+              port.postMessage({selection, context: 'A sentence with a word in it.', title: 'Smoke'});
+            })"""
+            # The real worker loads the Rust core under the extension CSP and rejects a blank selection.
+            assert await popup.evaluate(stream, "   ") == [{"error": "Select some text first."}]
             await popup.reload()
-            await expect(popup.locator("#key-state")).to_contain_text("Key saved for this session")
-            assert not await popup.locator("details").evaluate("element => element.open")
+            await expect(popup.locator("#key-state")).to_contain_text("Ready")
             await expect(popup.locator("#api-key")).to_have_value("")
             await evidence(popup, "chromium-extension-popup.png")
-            print("PASS Chromium unpacked extension popup: session save and reload")
+            print("PASS Chromium unpacked extension: popup session save and reload, Rust core in the service worker")
         finally:
             await context.close()
 

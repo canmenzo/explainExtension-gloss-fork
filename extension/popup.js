@@ -2,57 +2,35 @@ const api = globalThis.browser ?? globalThis.chrome;
 const status = document.querySelector("#status");
 const input = document.querySelector("#api-key");
 const model = document.querySelector("#model");
-const enable = document.querySelector("#enable");
 const form = document.querySelector("#key-form");
 const save = form.querySelector(".save");
-const settings = document.querySelector("details");
 const keyState = document.querySelector("#key-state");
 const keyError = document.querySelector("#key-error");
 const toggleKey = document.querySelector("#toggle-key");
-let hasKey = false;
 
 function showStatus(message, state = "") {
   status.textContent = message;
   status.dataset.state = state;
 }
 
+function showKeySaved() {
+  keyState.textContent = "Ready";
+  keyState.dataset.state = "ready";
+  input.placeholder = "Saved. Enter a new key to replace it";
+}
+
 api.storage.session.get(["geminiKey", "geminiModel"]).then((value) => {
   if (value.geminiModel) model.value = value.geminiModel;
-  hasKey = Boolean(value.geminiKey);
-  keyState.textContent = hasKey ? "Key saved for this session" : "Setup needed";
-  keyState.dataset.state = hasKey ? "ready" : "";
-  settings.open = !hasKey;
-  if (hasKey) input.placeholder = "Enter a replacement key";
+  if (value.geminiKey) showKeySaved();
   else {
-    showStatus("Works on this tab only. Add your key below first.");
+    keyState.textContent = "Add your key";
+    keyState.dataset.state = "";
     input.focus();
   }
 }).catch(() => {
   keyState.textContent = "Session unavailable";
   keyState.dataset.state = "error";
-  settings.open = true;
   showStatus("Could not read this session. Reopen Explain to try again.", "error");
-});
-
-enable.addEventListener("click", async () => {
-  enable.disabled = true;
-  enable.textContent = "Enabling this page…";
-  enable.setAttribute("aria-busy", "true");
-  showStatus("Connecting Explain to this tab…");
-  try {
-    const result = await api.runtime.sendMessage({ type: "enable-tab" });
-    if (result?.ok) {
-      showStatus(hasKey ? "Ready. Select text on the page." : "Page enabled. Add your key below to explain text.", "success");
-    } else {
-      showStatus(result?.error || "This page cannot run the extension.", "error");
-    }
-  } catch {
-    showStatus("Could not enable this page. Reopen Explain and try again.", "error");
-  } finally {
-    enable.disabled = false;
-    enable.textContent = "Use on this page";
-    enable.removeAttribute("aria-busy");
-  }
 });
 
 toggleKey.addEventListener("click", () => {
@@ -68,6 +46,10 @@ input.addEventListener("input", () => {
   keyError.hidden = true;
 });
 
+model.addEventListener("change", () => {
+  api.storage.session.set({ geminiModel: model.value }).catch(() => {});
+});
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const key = input.value.trim();
@@ -81,20 +63,17 @@ form.addEventListener("submit", async (event) => {
   save.disabled = true;
   save.textContent = "Saving key…";
   form.setAttribute("aria-busy", "true");
-  showStatus("Saving your key for this session…");
+  showStatus("");
   try {
     const result = await api.runtime.sendMessage({ type: "save-key", key, model: model.value });
     if (result?.ok) {
-      hasKey = true;
-      keyState.textContent = "Key saved for this session";
-      keyState.dataset.state = "ready";
+      showKeySaved();
       input.value = "";
       input.type = "password";
-      input.placeholder = "Enter a replacement key";
       toggleKey.textContent = "Show";
       toggleKey.setAttribute("aria-label", "Show API key");
       toggleKey.setAttribute("aria-pressed", "false");
-      showStatus("Key saved for this browser session.", "success");
+      showStatus("Saved. Select text, right-click, and choose Explain.", "success");
     } else {
       showStatus("Could not save the key for this session. Try again.", "error");
     }

@@ -35,15 +35,17 @@ header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 h1 { margin: 0; font-size: 18px; line-height: 24px; font-weight: 600; letter-spacing: -.2px; }
 header p { margin: 2px 0 0; color: var(--muted); font-size: 12px; line-height: 16px; }
 p { text-wrap: pretty; }
-.page-action {
-  margin-bottom: 10px;
+.how, .settings {
   border: 1px solid var(--line);
   border-radius: 16px;
-  padding: 14px;
   background: #fff;
   box-shadow: 0 1px 2px rgba(15, 23, 42, .03), 0 8px 24px rgba(15, 23, 42, .04);
 }
-.instruction { margin: 0 0 10px; color: #1f2937; font-size: 14px; line-height: 20px; font-weight: 500; }
+.how { margin-bottom: 12px; padding: 12px 14px; }
+.how ol { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.how li { display: flex; align-items: center; gap: 10px; color: #1f2937; font-size: 13px; line-height: 20px; }
+.how strong { color: var(--blue); font-weight: 600; }
+.step { display: grid; flex: 0 0 22px; height: 22px; place-items: center; border-radius: 50%; background: var(--blue-soft); color: var(--blue); font-size: 11px; font-weight: 600; }
 button, input, select { font: inherit; }
 button {
   width: 100%;
@@ -57,13 +59,13 @@ button {
   cursor: pointer;
   transition: background-color 150ms var(--ease), color 150ms var(--ease), transform 150ms var(--ease), box-shadow 150ms var(--ease);
 }
-#enable { box-shadow: 0 1px 2px rgba(49, 93, 173, .3), 0 4px 12px rgba(49, 93, 173, .18); }
 button:hover:not(:disabled) { background: #2a529b; }
 button:active:not(:disabled) { transform: scale(.98); }
 button:disabled { cursor: wait; opacity: .65; }
-button:focus-visible, summary:focus-visible, a:focus-visible { outline: none; box-shadow: var(--ring); }
+button:focus-visible, a:focus-visible { outline: none; box-shadow: var(--ring); }
 input:focus-visible, select:focus-visible { outline: none; }
-#status { min-height: 16px; margin: 8px 0 0; color: var(--muted); font-size: 12px; line-height: 16px; }
+#status:empty { display: none; }
+#status { margin: 8px 0 0; color: var(--muted); font-size: 12px; line-height: 16px; }
 #status[data-state="success"] { color: #2f7a5f; }
 #status[data-state="error"], .field-error { color: #b0444b; }
 .session-state { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 4px 6px; color: var(--muted); font-size: 12px; line-height: 16px; }
@@ -71,17 +73,7 @@ input:focus-visible, select:focus-visible { outline: none; }
 #key-state::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .7; }
 #key-state[data-state="ready"] { background: #e8f4ee; color: #2f7a5f; }
 #key-state[data-state="error"] { background: #fbecec; color: #b0444b; }
-details {
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, .03), 0 8px 24px rgba(15, 23, 42, .04);
-}
-summary { border-radius: 16px; padding: 12px 14px; color: #1f2937; font-size: 13px; line-height: 16px; font-weight: 600; cursor: pointer; transition: background-color 150ms var(--ease); }
-summary:hover { background: #f8fafd; }
-summary::marker { color: #9aa4b2; }
-form { padding: 2px 14px 12px; }
-details[open] form { animation: reveal 250ms var(--ease); }
+.settings { padding: 14px; }
 .field { margin-bottom: 10px; }
 label { display: block; margin-bottom: 4px; color: #374151; font-size: 12px; line-height: 16px; font-weight: 600; }
 input, select {
@@ -108,10 +100,8 @@ input[aria-invalid="true"] { border-color: #d48a8f; box-shadow: 0 0 0 3px rgba(1
 .field-error { margin: 8px 0 0; font-size: 12px; line-height: 16px; }
 .help { display: inline-block; margin-top: 6px; color: var(--blue); font-size: 12px; line-height: 16px; text-decoration: none; border-radius: 4px; }
 .help:hover { text-decoration: underline; text-underline-offset: 3px; }
-.save { background: var(--blue-soft); color: var(--blue); font-size: 13px; line-height: 16px; }
-.save:hover:not(:disabled) { background: #e1e9f9; }
+.save { margin-top: 2px; box-shadow: 0 1px 2px rgba(49, 93, 173, .3), 0 4px 12px rgba(49, 93, 173, .18); font-size: 13px; line-height: 16px; }
 .hint { margin: 8px 0 0; color: var(--muted); font-size: 11.5px; line-height: 16px; }
-@keyframes reveal { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; transform: none !important; }
 }
