@@ -287,14 +287,17 @@ async def popup_fixture(browser_type):
         await expect(page.locator("#status")).to_contain_text("this tab only")
         await expect(page.locator("#api-key")).to_be_focused()
         height = await page.locator("main").evaluate("element => element.getBoundingClientRect().height")
+        # Chrome caps popups at 600px; leave room for the 24px validation message.
+        assert height <= 576, height
         assert await page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         await evidence(page, f"{browser_type.name}-popup-setup.png", full_page=True)
-        await page.set_viewport_size({"width": 320, "height": 600})
-        assert await page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+        # Chrome measures popups from a tiny initial viewport; the layout must not shrink with it.
+        await page.set_viewport_size({"width": 160, "height": 600})
+        assert await page.locator("body").evaluate("element => element.getBoundingClientRect().width") == 336
         for selector in ("#api-key", "#toggle-key", "#model", "#enable", "#key-form .save"):
             bounds = await page.locator(selector).bounding_box()
-            assert bounds and bounds["x"] >= 0 and bounds["x"] + bounds["width"] <= 321, (selector, bounds)
-        await evidence(page, f"{browser_type.name}-popup-setup-narrow.png", full_page=True)
+            assert bounds and bounds["x"] >= 0 and bounds["x"] + bounds["width"] <= 337, (selector, bounds)
+        await page.set_viewport_size({"width": 336, "height": 600})
         save = page.locator("#key-form .save")
         await save.click()
         await expect(page.locator("#key-error")).to_be_visible()
