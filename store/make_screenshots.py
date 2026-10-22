@@ -21,16 +21,11 @@ ANSWER = ("Syzygy is the straight-line alignment of three celestial bodies. Here
 ERROR = "Google rate or usage limit reached. Try again later."
 
 SHOTS = {
-    "1-context-menu.png": ("Select text, right-click, choose Explain",
-                           "Explain runs only when you ask, on the text you picked."),
-    "2-streaming.png": ("The answer streams in beside your text",
-                        "A short, plain explanation, written for the passage you are reading."),
-    "3-explanation.png": ("Understand it without leaving the page",
-                          "Explain reads the surrounding paragraph, so answers fit the context."),
-    "4-error-retry.png": ("Clear errors, one click to retry",
-                          "If Google cannot answer, Explain says why and lets you try again."),
-    "5-popup.png": ("Bring your own free Gemini key",
-                    "Paste a key from Google AI Studio. It is kept for this browser session only."),
+    "1-context-menu.png": "Select text, right-click, choose Explain",
+    "2-streaming.png": "The answer streams in beside your text",
+    "3-explanation.png": "Understand it without leaving the page",
+    "4-error-retry.png": "Clear errors, one click to retry",
+    "5-popup.png": "Bring your own free Gemini key",
 }
 
 ARTICLE = """<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Why the Sea Rises Twice a Day</title>
@@ -64,9 +59,8 @@ FRAME = """<!doctype html><html lang="en"><head><meta charset="utf-8"><style>
 *{box-sizing:border-box}
 body{margin:0;width:1280px;height:800px;overflow:hidden;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased;
   background:radial-gradient(900px 420px at 50% -80px,#dfe8f8,transparent),linear-gradient(180deg,#eef2f9,#e7ecf5)}
-.caption{position:absolute;top:44px;left:0;right:0;text-align:center}
+.caption{position:absolute;top:60px;left:0;right:0;text-align:center}
 h1{margin:0;color:#18202d;font-size:34px;line-height:42px;font-weight:600;letter-spacing:-.02em}
-.caption p{margin:8px 0 0;color:#5d6778;font-size:17px;line-height:24px}
 .window{position:absolute;left:96px;top:170px;width:1088px;height:690px;border-radius:12px;overflow:hidden;background:#fff;
   box-shadow:0 0 0 1px #0f172a1a,0 2px 6px #0f172a0f,0 24px 60px -12px #0f172a40}
 .bar{height:46px;display:flex;align-items:center;gap:14px;padding:0 16px;background:#f1f3f6;border-bottom:1px solid #e1e5eb;font-size:13px;color:#5b6575}
@@ -79,7 +73,7 @@ iframe{display:block;width:100%;height:644px;border:0}
 .popup{position:absolute;top:50px;right:10px;width:336px;border:0;border-radius:12px;background:#f6f7fa;
   box-shadow:0 0 0 1px #0f172a1f,0 8px 20px #0f172a1a,0 24px 48px -12px #0f172a40}
 </style></head><body>
-<div class="caption"><h1></h1><p></p></div>
+<div class="caption"><h1></h1></div>
 <div class="window"><div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">example.org/essays/tides</span>
 <span class="ext"><img src="/extension/icons/icon-32.png" alt=""></span></div><iframe src="/article.html"></iframe></div>
 </body></html>"""
@@ -115,9 +109,7 @@ async def serve(route):
 async def window(context, name):
     page = await context.new_page()
     await page.goto(f"{ORIGIN}/frame.html")
-    title, subtitle = SHOTS[name]
-    await page.evaluate("([t, s]) => { document.querySelector('h1').textContent = t; document.querySelector('.caption p').textContent = s; }",
-                        [title, subtitle])
+    await page.evaluate("t => { document.querySelector('h1').textContent = t; }", SHOTS[name])
     article = page.frames[1]
     await article.wait_for_load_state()
     await article.evaluate("""() => {

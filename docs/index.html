@@ -39,11 +39,10 @@
 </nav>
 <main id="main">
 <header class="hero" id="top">
-<p class="status"><span class="dot" aria-hidden="true"></span><span>For Chrome and Firefox<span class="more">. Chrome Web Store listing coming soon.</span></span></p>
+<p class="status"><span class="dot" aria-hidden="true"></span><span>For Chrome and Firefox</span></p>
 <h1>Understand what you read, right where you read it</h1>
-<p class="sub">Select a word or passage, <span class="nw">right-click,</span> and choose Explain. A small card opens beside the text with a short, plain explanation from Google Gemini.</p>
+<p class="sub">Select text, <span class="nw">right-click,</span> choose Explain. A short, plain answer appears right beside it.</p>
 <div class="cta"><a class="btn" href="https://github.com/canmenzo/explainExtension/releases/latest"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Download from GitHub</a><a class="btn ghost" href="#install">See install steps</a></div>
-<p class="proof">Free and open source. Uses your own free Google AI Studio key. No account, no analytics, no servers of ours.</p>
 
 <figure class="demo" id="demo">
 <div class="win" role="img" aria-label="Illustration: on an article about tides, the word syzygy is selected, the right-click menu offers Explain, and a card beside the word explains it in two sentences.">
@@ -64,17 +63,17 @@
 
 <section class="wrap" id="how">
 <p class="eyebrow rv">How it works</p>
-<h2 class="rv">Add a key once, then right-click to explain</h2>
+<h2 class="rv">Add a key once, then right-click</h2>
 <ol class="trio">
-<li class="card rv"><span class="n">1</span><h3>Add your key</h3><p>Click the Explain icon in the toolbar, paste your Google AI Studio key and click <strong>Save key</strong>. It is kept until the browser closes.</p></li>
-<li class="card rv"><span class="n">2</span><h3>Select and right-click</h3><p>Highlight a word, a phrase or a whole passage on any page, right-click it, and choose <strong>Explain</strong>.</p></li>
-<li class="card rv"><span class="n">3</span><h3>Read beside the text</h3><p>A card opens next to your selection and the explanation streams in as Gemini writes it. Close it with <kbd>Esc</kbd> or a click outside.</p></li>
+<li class="card rv"><span class="n">1</span><h3>Add your key</h3><p>Paste a free Google AI Studio key into the toolbar popup.</p></li>
+<li class="card rv"><span class="n">2</span><h3>Right-click</h3><p>Select any word or passage and choose <strong>Explain</strong>.</p></li>
+<li class="card rv"><span class="n">3</span><h3>Read</h3><p>The answer streams into a card beside the text. <kbd>Esc</kbd> closes it.</p></li>
 </ol>
 <div class="grid">
-<div class="card rv"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h13"/></svg><h3>Explained in context</h3><p>Explain sends the paragraph around your selection too, so a word is explained the way this page uses it.</p></div>
-<div class="card rv"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg><h3>Streams as it writes</h3><p>The answer appears word by word as Gemini writes it. Long answers scroll inside the card, so the page stays where it was.</p></div>
-<div class="card rv"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><h3>Quiet until asked</h3><p>Nothing runs on a page until you choose Explain from the menu, and then only on that tab.</p></div>
-<div class="card rv"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 11-2.3-5.6M20 4v4h-4"/></svg><h3>Clear when it fails</h3><p>If Gemini is busy or the key is wrong, the card says so in plain words and offers <strong>Try again</strong>.</p></div>
+<div class="card rv"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h13"/></svg><h3>Explained in context</h3><p>The paragraph around your selection is sent too, so answers fit the page.</p></div>
+<div class="card rv"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg><h3>Streams as it writes</h3><p>Words appear as Gemini writes them. The page never jumps.</p></div>
+<div class="card rv"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><h3>Quiet until asked</h3><p>Nothing runs on a page until you choose Explain.</p></div>
+<div class="card rv"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 11-2.3-5.6M20 4v4h-4"/></svg><h3>Clear when it fails</h3><p>Plain error messages and a <strong>Try again</strong> button.</p></div>
 </div>
 </section>
 
@@ -82,58 +81,59 @@
 <p class="eyebrow rv">Screenshots</p>
 <h2 class="rv">What it looks like in your browser</h2>
 <div class="gallery">
-<figure class="rv"><a href="img/5-popup.png"><picture><source srcset="img/5-popup.webp" type="image/webp"><img src="img/5-popup.png" width="1280" height="800" loading="lazy" decoding="async" alt="The Explain toolbar popup open over an article, with a Gemini API key field, a Get a free key link and a Save key button"></picture></a><figcaption><strong>Setup.</strong> The toolbar popup only asks for your key. <strong>Get a free key</strong> opens Google AI Studio.</figcaption></figure>
-<figure class="rv"><a href="img/1-context-menu.png"><picture><source srcset="img/1-context-menu.webp" type="image/webp"><img src="img/1-context-menu.png" width="1280" height="800" loading="lazy" decoding="async" alt="The word syzygy selected in an article, with the right-click menu open and Explain highlighted"></picture></a><figcaption><strong>Ask.</strong> Right-click any selection and choose Explain.</figcaption></figure>
-<figure class="rv"><a href="img/3-explanation.png"><picture><source srcset="img/3-explanation.webp" type="image/webp"><img src="img/3-explanation.png" width="1280" height="800" loading="lazy" decoding="async" alt="The Explain card below the selected word, explaining that syzygy is the alignment of the Sun, the Moon and Earth"></picture></a><figcaption><strong>Read.</strong> The answer appears in a card right next to your selection.</figcaption></figure>
-<figure class="rv"><a href="img/4-error-retry.png"><picture><source srcset="img/4-error-retry.webp" type="image/webp"><img src="img/4-error-retry.png" width="1280" height="800" loading="lazy" decoding="async" alt="The Explain card showing that Google's rate limit was reached, with a Try again button"></picture></a><figcaption><strong>Recover.</strong> Errors are spelled out, with <strong>Try again</strong> one click away.</figcaption></figure>
+<figure class="rv"><a href="img/5-popup.png"><picture><source srcset="img/5-popup.webp" type="image/webp"><img src="img/5-popup.png" width="1280" height="800" loading="lazy" decoding="async" alt="The Explain toolbar popup open over an article, with a Gemini API key field, a Get a free key link and a Save key button"></picture></a></figure>
+<figure class="rv"><a href="img/1-context-menu.png"><picture><source srcset="img/1-context-menu.webp" type="image/webp"><img src="img/1-context-menu.png" width="1280" height="800" loading="lazy" decoding="async" alt="The word syzygy selected in an article, with the right-click menu open and Explain highlighted"></picture></a></figure>
+<figure class="rv"><a href="img/3-explanation.png"><picture><source srcset="img/3-explanation.webp" type="image/webp"><img src="img/3-explanation.png" width="1280" height="800" loading="lazy" decoding="async" alt="The Explain card below the selected word, explaining that syzygy is the alignment of the Sun, the Moon and Earth"></picture></a></figure>
+<figure class="rv"><a href="img/4-error-retry.png"><picture><source srcset="img/4-error-retry.webp" type="image/webp"><img src="img/4-error-retry.png" width="1280" height="800" loading="lazy" decoding="async" alt="The Explain card showing that Google's rate limit was reached, with a Try again button"></picture></a></figure>
 </div>
 </section>
 
-<div class="tagline"><div class="wrap"><p id="tag">A word you do not know should not send you to another tab. Explain answers it beside the sentence, then gets out of the way.</p></div></div>
+<div class="tagline"><div class="wrap"><p id="tag">A word you do not know should not send you to another tab.</p></div></div>
 
 <section class="wrap" id="privacy">
 <p class="eyebrow rv">Privacy</p>
 <h2 class="rv">Your text goes to Google, and nowhere else</h2>
-<p class="lead rv">Explain has no servers, no account and no analytics. When you choose Explain, your browser sends the request straight to Google's Gemini API with your own key. Nothing passes through us.</p>
+<p class="lead rv">No servers, no account, no analytics. Requests go straight from your browser to Google with your own key.</p>
 <div class="facts">
 <div class="card rv"><h3>What is sent</h3><ul><li>The text you selected</li><li>The paragraph around it</li><li>The page title</li><li>Your API key, to authenticate the request</li></ul></div>
 <div class="card rv"><h3>What is never sent</h3><ul><li>The page address</li><li>The page's HTML</li><li>Anything from tabs where you did not choose Explain</li></ul></div>
 <div class="card rv"><h3>What is stored</h3><ul><li>Only your API key, in browser session memory</li><li>Cleared when the browser closes</li><li>Answers are shown, then discarded</li></ul></div>
 </div>
-<p class="note rv"><strong>Google's free tier.</strong> Requests are processed under Google's terms. On the free tier, Google may use submitted content to improve its products; its paid tier says it does not. Avoid explaining sensitive text on a free key. Read the full <a href="privacy.html">privacy policy</a>.</p>
+<p class="note rv"><strong>Free tier.</strong> Google may use free-tier requests to improve its products, so avoid sensitive text. Read the <a href="privacy.html">privacy policy</a>.</p>
 </section>
 
 <section class="wrap" id="install">
 <p class="eyebrow rv">Install</p>
 <h2 class="rv">Ready in about two minutes</h2>
 <ol class="steps rv">
-<li><strong>Download the ZIP</strong><span>Get <code>explain-chrome.zip</code> from the <a href="https://github.com/canmenzo/explainExtension/releases/latest">latest release</a> and unzip it.</span></li>
-<li><strong>Open the extensions page</strong><span>Type <code>chrome://extensions</code> in the address bar and turn on <strong>Developer mode</strong> in the top right.</span></li>
-<li><strong>Load unpacked</strong><span>Click <strong>Load unpacked</strong> and choose the unzipped folder, the one that contains <code>manifest.json</code>. Pin Explain from the puzzle piece menu so its icon stays in the toolbar.</span></li>
-<li><strong>Add your key</strong><span>Click the Explain icon and follow <strong>Get a free key</strong> to <a href="https://aistudio.google.com/apikey">Google AI Studio</a>. Paste the key and click <strong>Save key</strong>. Then select text, right-click and choose Explain.</span></li>
+<li><strong>Download</strong><span>Get <code>explain-chrome.zip</code> from the <a href="https://github.com/canmenzo/explainExtension/releases/latest">latest release</a> and unzip it.</span></li>
+<li><strong>Open extensions</strong><span>Go to <code>chrome://extensions</code> and turn on <strong>Developer mode</strong>.</span></li>
+<li><strong>Load unpacked</strong><span>Click <strong>Load unpacked</strong> and choose the unzipped folder.</span></li>
+<li><strong>Add your key</strong><span>Click the Explain icon, then <strong>Get a free key</strong>. Paste it and click <strong>Save key</strong>.</span></li>
 </ol>
-<div class="note rv"><strong>Firefox.</strong> Download <code>explain-firefox.zip</code> from the same release and unzip it. Open <code>about:debugging#/runtime/this-firefox</code>, click <strong>Load Temporary Add-on</strong> and pick <code>manifest.json</code> in the unzipped folder. Firefox removes temporary add-ons when it closes, so repeat this after a restart. Needs Firefox 140 or newer.</div>
-<div class="note rv"><strong>Chrome Web Store.</strong> A store listing is coming soon, with one-click install and automatic updates. Until then, the GitHub release is the way in.</div>
+<div class="note rv"><strong>Firefox 140+.</strong> Unzip <code>explain-firefox.zip</code>, open <code>about:debugging#/runtime/this-firefox</code>, click <strong>Load Temporary Add-on</strong> and pick <code>manifest.json</code>. Firefox removes it on restart.</div>
+
 </section>
 
 <section class="wrap" id="faq">
 <p class="eyebrow rv">FAQ</p>
 <h2 class="rv">Questions people ask</h2>
-<details class="rv"><summary>Does it cost anything?</summary><p>Explain itself is free and MIT licensed. The Gemini key is yours: creating one in Google AI Studio is free, and Google's free tier covers light reading with rate limits that depend on your account. If you set up billing with Google, Google charges you directly. See <a href="https://ai.google.dev/gemini-api/docs/pricing">Gemini API pricing</a>.</p></details>
-<details class="rv"><summary>What exactly is sent, and to whom?</summary><p>Only when you choose Explain: the selected text (up to 12,000 characters), the paragraph, list item, heading or table cell around it (up to 5,000 characters), the page title (up to 300 characters) and your key. It goes straight from your browser to <code>generativelanguage.googleapis.com</code>. The page address and HTML are never sent.</p></details>
-<details class="rv"><summary>Why do I paste my key again after restarting the browser?</summary><p>The key is kept only in the browser's session storage, which lives in memory and clears when the browser closes. Explain never writes it to disk. That is a deliberate trade for a little extra typing.</p></details>
-<details class="rv"><summary>What if I choose Explain before adding a key?</summary><p>The card says to add your key first, and where the browser allows it, the key popup opens for you. Paste the key, click <strong>Save key</strong> and choose Explain again.</p></details>
-<details class="rv"><summary>Which browsers are supported?</summary><p>Chrome, and Firefox 140 or newer, on desktop. Other Chromium browsers that can load unpacked extensions may work with the Chrome build, but they are not tested.</p></details>
-<details class="rv"><summary>Which model writes the answers?</summary><p>Gemini 3.8 Flash. Explain calls the model directly and does not run a Google Search, so answers come from the text you selected, the paragraph around it and what the model already knows.</p></details>
-<details class="rv"><summary>Can it read every page I visit?</summary><p>No. Explain has no access to your sites until you choose it from the right-click menu. That grants it the current tab only, through the browser's active tab permission.</p></details>
-<details class="rv"><summary>Is it in the Chrome Web Store?</summary><p>Not yet. The listing is coming soon. For now, install it from the GitHub release as described above.</p></details>
+<details class="rv"><summary>Does it cost anything?</summary><p>Explain is free and MIT licensed. A Gemini key from Google AI Studio is free too, with rate limits. See <a href="https://ai.google.dev/gemini-api/docs/pricing">Gemini API pricing</a>.</p></details>
+<details class="rv"><summary>What exactly is sent, and to whom?</summary><p>The selected text, the paragraph around it and the page title, sent straight to <code>generativelanguage.googleapis.com</code>. Never the page address or HTML.</p></details>
+<details class="rv"><summary>Why do I paste my key again after restarting the browser?</summary><p>The key lives only in session memory and is never written to disk, so it clears when the browser closes.</p></details>
+<details class="rv"><summary>What if I choose Explain before adding a key?</summary><p>The card asks for a key and the key popup opens where the browser allows it.</p></details>
+<details class="rv"><summary>Which browsers are supported?</summary><p>Chrome, and Firefox 140 or newer, on desktop.</p></details>
+<details class="rv"><summary>Which model writes the answers?</summary><p>Gemini 3.8 Flash, without Google Search.</p></details>
+<details class="rv"><summary>Can it read every page I visit?</summary><p>No. It only gets access to the current tab when you choose Explain.</p></details>
+<details class="rv"><summary>Is it in the Chrome Web Store?</summary><p>Not yet. Install it from the GitHub release for now.</p></details>
 </section>
 
 <section class="wrap final">
-<div class="panel rv"><img class="pm" src="icon-128.png" alt="" width="48" height="48" loading="lazy"><h2>Keep reading without losing your place</h2><p>Free, open source and ready in about two minutes.</p><div class="cta"><a class="btn lg" href="https://github.com/canmenzo/explainExtension/releases/latest"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Download from GitHub</a><a class="btn ghost lg" href="https://github.com/canmenzo/explainExtension">View source</a></div></div>
+<div class="panel rv"><img class="pm" src="icon-128.png" alt="" width="48" height="48" loading="lazy"><h2>Keep reading without losing your place</h2><div class="cta"><a class="btn lg" href="https://github.com/canmenzo/explainExtension/releases/latest"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Download from GitHub</a><a class="btn ghost lg" href="https://github.com/canmenzo/explainExtension">View source</a></div></div>
 </section>
 </main>
 <footer><div class="wrap"><div class="fb"><a class="brand" href="#top"><img src="icon-128.png" alt="" width="24" height="24">Explain</a><p>Plain explanations for what you read. MIT licensed. Made by <a href="https://menzo.dev">menzo</a>.</p></div><nav aria-label="Footer"><a href="https://github.com/canmenzo/explainExtension">GitHub</a><a href="https://github.com/canmenzo/explainExtension/releases/latest">Releases</a><a href="privacy.html">Privacy</a><a href="https://babil.menzo.dev">Babil</a><a href="https://hammurabi.menzo.dev">Hammurabi</a><a href="https://menzo.dev">menzo.dev</a></nav></div></footer>
+<dialog class="lb" id="lb" aria-label="Screenshot"><img alt=""></dialog>
 <script>
 (function(){
 var rm=matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -163,7 +163,7 @@ if(document.fonts)document.fonts.ready.then(place);
 if(rm||!("IntersectionObserver" in window)){stage(4);return}
 replay.hidden=false;replay.addEventListener("click",play);
 stage(0);
-var o=new IntersectionObserver(function(es){if(es[0].isIntersecting){o.disconnect();play()}},{threshold:.4});o.observe(demo);
+var o=new IntersectionObserver(function(es){if(es[0].isIntersecting){o.disconnect();play()}},{threshold:.6});o.observe(demo);
 })();
 (function(){
 var rm=matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -175,10 +175,18 @@ function all(){ws.concat(rv).forEach(function(e){e.classList.add("on")})}
 if(!("IntersectionObserver" in window)||rm){all();return}
 function mk(m){var o=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("on");o.unobserve(e.target)}})},{rootMargin:m});return o}
 var wo=mk("0px 0px -40% 0px");ws.forEach(function(w){wo.observe(w)});
-var ro=mk("0px 0px -5% 0px");rv.forEach(function(e){ro.observe(e)});
+// Reveal once an element is well inside the viewport, staggering items that arrive together.
+var ro=new IntersectionObserver(function(es){var n=0;es.forEach(function(e){if(!e.isIntersecting)return;var t=e.target,d=n++*90;t.style.transitionDelay=d+"ms";t.classList.add("on");ro.unobserve(t);setTimeout(function(){t.style.transitionDelay=""},d+900)})},{threshold:.2,rootMargin:"0px 0px -12% 0px"});
+rv.forEach(function(e){ro.observe(e)});
 var links=[].slice.call(document.querySelectorAll(".links a"));
 var so=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(a){if(a.getAttribute("href")==="#"+e.target.id)a.setAttribute("aria-current","true");else a.removeAttribute("aria-current")})}})},{rootMargin:"-40% 0px -55% 0px"});
 links.forEach(function(a){var s=document.querySelector(a.getAttribute("href"));if(s)so.observe(s)});
+})();
+(function(){
+var lb=document.getElementById("lb"),img=lb.querySelector("img");
+if(!lb.showModal)return;
+[].slice.call(document.querySelectorAll(".gallery a")).forEach(function(a){a.addEventListener("click",function(e){e.preventDefault();var i=a.querySelector("img");img.src=a.getAttribute("href");img.alt=i.alt;lb.showModal()})});
+lb.addEventListener("click",function(){lb.close()});
 })();
 </script>
 </body>
