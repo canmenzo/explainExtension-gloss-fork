@@ -1,5 +1,5 @@
 const api = globalThis.browser ?? globalThis.chrome;
-const DEFAULT_MODEL = "gemini-3.8-flash";
+const MODEL = "gemini-3.8-flash";
 const MENU_ID = "explain-selection";
 let corePromise;
 
@@ -24,8 +24,7 @@ api.contextMenus.onClicked.addListener(async (info, tab) => {
 
 api.runtime.onMessage.addListener((message) => {
   if (message?.type === "save-key" && typeof message.key === "string") {
-    const model = typeof message.model === "string" ? message.model : DEFAULT_MODEL;
-    return api.storage.session.set({ geminiKey: message.key, geminiModel: model }).then(() => ({ ok: true }));
+    return api.storage.session.set({ geminiKey: message.key }).then(() => ({ ok: true }));
   }
 });
 
@@ -53,10 +52,10 @@ async function stream(message, send, signal) {
     core.transition(requesting, 4);
     send({ error });
   };
-  const { geminiKey, geminiModel = DEFAULT_MODEL } = await api.storage.session.get(["geminiKey", "geminiModel"]);
-  if (!geminiKey) return fail("Add your Google Gemini API key: click the Explain icon in the toolbar.");
+  const { geminiKey } = await api.storage.session.get("geminiKey");
+  if (!geminiKey) return fail("Add your Google Gemini API key first. Click the Explain icon in your toolbar.");
   const request = core.buildRequest(
-    geminiModel,
+    MODEL,
     typeof message.title === "string" ? message.title : "",
     typeof message.context === "string" ? message.context : "",
     selection,

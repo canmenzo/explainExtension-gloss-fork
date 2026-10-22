@@ -15,29 +15,45 @@
   style.textContent = `
     :host{all:initial}
     *{box-sizing:border-box}
-    .card{position:fixed;display:flex;flex-direction:column;width:340px;max-width:calc(100vw - 24px);max-height:min(360px,calc(100vh - 24px));overflow:hidden;background:#FFF;color:#1F2937;color-scheme:light;font:14px/1.6 ui-sans-serif,system-ui,sans-serif;border-radius:16px;box-shadow:0 0 0 1px #0F172A0F,0 2px 6px #0F172A0A,0 16px 40px #0F172A1A;pointer-events:auto;opacity:0;transform:translateY(4px) scale(.98);transition:opacity 150ms cubic-bezier(.22,1,.36,1),transform 150ms cubic-bezier(.22,1,.36,1)}
-    .card.is-open{opacity:1;transform:none;transition-duration:250ms}
+    .card{--ink:#1B2230;--ink-2:#3A4456;--muted:#6B7586;--line:#0F172A10;--blue:#315DAD;--ease:cubic-bezier(.22,1,.36,1);
+      position:fixed;display:flex;flex-direction:column;width:360px;max-width:calc(100vw - 24px);max-height:min(400px,calc(100vh - 24px));overflow:hidden;
+      background:#FFF;color:var(--ink);color-scheme:light;font:14px/22px ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;
+      border-radius:14px;box-shadow:0 0 0 1px #0F172A12,0 2px 4px #0F172A0A,0 12px 32px -8px #0F172A2E,0 28px 56px -20px #0F172A24;
+      pointer-events:auto;opacity:0;transform:translateY(4px) scale(.98);transform-origin:50% 0;
+      transition:opacity 150ms var(--ease),transform 150ms var(--ease)}
+    :host([data-placement="above"]) .card{transform-origin:50% 100%}
+    :host([data-placement="above"]) .card:not(.is-open){transform:translateY(-4px) scale(.98)}
+    .card.is-open{opacity:1;transform:none;transition-duration:220ms}
     .card[hidden]{display:none}
-    .header{display:flex;align-items:center;gap:8px;flex-shrink:0;padding:10px 8px 6px 14px}
-    .mark{display:inline-grid;place-items:center;flex-shrink:0;width:22px;height:22px;border-radius:7px;background:linear-gradient(160deg,#4B76C8,#315DAD);color:#FFF;font-size:14px;font-weight:600;line-height:1}
-    .title{flex:1;min-width:0;margin:0;overflow:hidden;color:#6B7686;font-size:12px;font-weight:500;line-height:20px;white-space:nowrap;text-overflow:ellipsis}
-    button{appearance:none;border:0;font:600 13px/1 ui-sans-serif,system-ui,sans-serif;cursor:pointer;transition:background-color 150ms ease-out,color 150ms ease-out,transform 150ms ease-out}
-    button:active{transform:scale(.96)}button:focus-visible{outline:none;box-shadow:0 0 0 3px #315DAD29}
-    .close{display:grid;place-items:center;flex-shrink:0;width:28px;height:28px;padding:0;border-radius:8px;background:transparent;color:#6B7686}.close:hover{background:#EDF2FC;color:#1F2937}
-    .close svg{width:14px;height:14px;stroke:currentColor;stroke-width:1.6;fill:none}
-    .body{min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:2px 16px 14px;scrollbar-width:thin;scrollbar-color:#CDD6E4 transparent}
-    .body:focus-visible{outline:none;box-shadow:inset 0 0 0 2px #315DAD29}
-    .answer{margin:0;color:#1F2937;font-size:14px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
-    .answer span{animation:fade 250ms cubic-bezier(.22,1,.36,1)}
-    .caret{display:inline-block;width:2px;height:1em;margin-left:2px;border-radius:1px;vertical-align:-2px;background:#315DAD;animation:blink 1s steps(2,start) infinite}
-    .thinking{display:flex;align-items:center;gap:10px;margin:0;color:#6B7686;font-size:13px;line-height:22px}
-    .dots{display:inline-flex;gap:4px}.dots i{width:5px;height:5px;border-radius:50%;background:#8AA6DB;animation:pulse 1.2s ease-in-out infinite}.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
-    .error-text{margin:0 0 12px;color:#B0444B;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
-    .retry{padding:9px 14px;border-radius:10px;background:#EDF2FC;color:#315DAD}.retry:hover{background:#E1E9F9}
+    .header{display:flex;align-items:flex-start;gap:10px;flex-shrink:0;padding:12px 10px 11px 14px;border-bottom:1px solid var(--line)}
+    .mark{display:grid;place-items:center;flex-shrink:0;width:22px;height:22px;border-radius:7px;background:linear-gradient(165deg,#4A77C9,#315DAD 70%);box-shadow:inset 0 1px 0 #FFFFFF38;color:#FFF;font-size:13.5px;font-weight:600;line-height:1;padding-bottom:1px}
+    .title{flex:1;min-width:0;margin:0;padding-top:2px;color:var(--ink-2);font-size:13px;font-weight:600;line-height:18px;letter-spacing:-.003em;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow-wrap:anywhere}
+    button{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;margin:0;border:0;background:none;color:inherit;font:inherit;cursor:pointer;
+      transition:background-color 150ms var(--ease),color 150ms var(--ease),box-shadow 150ms var(--ease),transform 150ms var(--ease)}
+    button:active{transform:scale(.96)}
+    button:focus-visible,.body:focus-visible{outline:none;box-shadow:0 0 0 3px #315DAD33}
+    svg{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+    .close{flex-shrink:0;width:28px;height:28px;margin:-3px 0 -3px;padding:0;border-radius:8px;color:var(--muted)}
+    .close:hover{background:#F0F2F6;color:var(--ink)}
+    .close svg{width:12px;height:12px;stroke-width:1.75}
+    .body{min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:12px 16px 16px;scrollbar-width:thin;scrollbar-color:#CDD5E1 transparent}
+    .body:focus-visible{box-shadow:inset 0 0 0 2px #315DAD33}
+    .answer{margin:0;color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere;text-wrap:pretty}
+    .answer span{animation:fade 200ms var(--ease)}
+    .caret{display:inline-block;width:2px;height:15px;margin-left:2px;border-radius:1px;vertical-align:-2px;background:var(--blue);animation:breathe 900ms ease-in-out infinite alternate}
+    .skeleton{display:grid;gap:12px;padding:6px 0}
+    .skeleton i{display:block;height:10px;border-radius:5px;background:linear-gradient(90deg,#EEF1F6 0,#E1E6EE 40%,#EEF1F6 80%) 0 0/300% 100%;animation:shimmer 1.4s ease-in-out infinite}
+    .skeleton i:nth-child(2){width:92%}.skeleton i:nth-child(3){width:58%}
+    .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+    .error{display:flex;gap:10px;margin:0;color:var(--ink-2);font-size:13.5px;line-height:20px;overflow-wrap:anywhere}
+    .error svg{flex-shrink:0;width:16px;height:16px;margin-top:2px;color:#B0414A;stroke-width:1.6}
+    .retry{height:32px;margin:12px 0 0 26px;padding:0 12px 0 10px;border-radius:8px;background:#EDF2FB;color:var(--blue);font-size:13px;font-weight:600}
+    .retry:hover{background:#E1E9F8}
+    .retry svg{width:14px;height:14px;stroke-width:1.75}
     @keyframes fade{from{opacity:0}}
-    @keyframes blink{to{visibility:hidden}}
-    @keyframes pulse{0%,100%{opacity:.35;transform:scale(.85)}50%{opacity:1;transform:none}}
-    @media(prefers-reduced-motion:reduce){.card{transition:none;transform:none}.answer span,.caret,.dots i{animation:none}button:active{transform:none}}
+    @keyframes breathe{from{opacity:1}to{opacity:.2}}
+    @keyframes shimmer{from{background-position:100% 0}to{background-position:0 0}}
+    @media(prefers-reduced-motion:reduce){.card,:host([data-placement="above"]) .card:not(.is-open){transition:none;transform:none}.answer span,.caret,.skeleton i{animation:none}button:active{transform:none}}
   `;
   const card = document.createElement("section");
   card.className = "card";
@@ -53,7 +69,7 @@
   close.type = "button";
   close.className = "close";
   close.setAttribute("aria-label", "Dismiss explanation");
-  close.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"/></svg>';
+  close.innerHTML = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="m2 2 8 8M10 2l-8 8"/></svg>';
   close.addEventListener("click", () => dismiss());
   header.append(title, close);
   const body = document.createElement("div");
@@ -139,12 +155,13 @@
     host.dataset.phase = "error";
     body.setAttribute("aria-busy", "false");
     const text = document.createElement("p");
-    text.className = "error-text";
-    text.textContent = message;
+    text.className = "error";
+    text.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.25"/><path d="M8 4.9v3.4M8 10.9v.1"/></svg>';
+    text.append(message);
     const retry = document.createElement("button");
     retry.type = "button";
     retry.className = "retry";
-    retry.textContent = "Try again";
+    retry.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13.25 8a5.25 5.25 0 1 1-1.54-3.71M13.25 2.75v3h-3"/></svg>Try again';
     retry.addEventListener("click", run);
     body.replaceChildren(text, retry);
     place();
@@ -154,11 +171,10 @@
     port?.disconnect();
     host.dataset.phase = "loading";
     body.setAttribute("aria-busy", "true");
-    const thinking = document.createElement("p");
-    thinking.className = "thinking";
+    const thinking = document.createElement("div");
+    thinking.className = "skeleton";
     thinking.setAttribute("role", "status");
-    thinking.innerHTML = '<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>';
-    thinking.append("Reading the passage…");
+    thinking.innerHTML = '<i></i><i></i><i></i><span class="sr">Explaining…</span>';
     body.replaceChildren(thinking);
     body.scrollTop = 0;
     open();
@@ -209,7 +225,8 @@
     if (!next) return;
     payload = next;
     side = undefined;
-    title.textContent = `“${next.selection.replace(/\s+/g, " ")}”`;
+    title.textContent = next.selection.replace(/\s+/g, " ");
+    title.title = title.textContent.slice(0, 500);
     run();
   });
 

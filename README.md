@@ -1,14 +1,14 @@
 # Explain
 
-Explain a selected word or passage on the page you are reading. Select text to reveal a small floating action, then choose **Explain**. The extension sends the selected text, nearby paragraph, and page title directly to Google Gemini.
+Explain a selected word or passage on the page you are reading. Select text, right-click it, and choose **Explain**. The extension sends the selected text, nearby paragraph, and page title directly to Google Gemini.
 
 ## Interface
 
-The popup opens setup when your session has no API key and shows whether a key has been saved. Choose **Use on this page** to enable the active tab, then select a word or passage. Press **Enter** or choose **Explain** to open an explanation beside the selection.
+The toolbar popup does one thing: it takes your Gemini API key. Once a key is saved it shows a ready state with a reminder of how to use Explain, and lets you replace the key. If you choose **Explain** before adding a key, the popup opens so you can add one.
 
-The explanation card keeps the selected passage in view, shows progress while waiting, and offers **Try again** if the request fails. Long answers scroll inside the card. Dismiss it with its close button, **Escape**, or a click outside. The interface follows your system's reduced motion preference.
+Choosing **Explain** from the right-click menu opens a small card beside the selection. It shows the selected text, a loading state, and then the answer as it streams in from Gemini. If the request fails, the card says why and offers **Try again**. Long answers scroll inside the card. Dismiss it with its close button, **Escape**, or a click outside. The interface follows your system's reduced motion preference.
 
-The implementation and verification plan is in [UI_PLAN.md](UI_PLAN.md).
+Website: [explain.menzo.dev](https://explain.menzo.dev).
 
 ## Build
 
@@ -31,19 +31,19 @@ npm test
 
 1. Open `chrome://extensions` and enable **Developer mode**.
 2. Choose **Load unpacked** and select `dist/chrome`.
-3. Select the Explain icon on a page and choose **Use on this page**. This uses Chrome's temporary access for the active tab. Select text on that page to open Explain.
-4. Choose a Gemini Flash model in the extension popup and enter your Google AI Studio API key. The key and model choice stay in session storage and clear when the browser closes.
+3. Click the Explain icon in the toolbar and paste your Google AI Studio API key. The key stays in session storage and clears when the browser closes.
+4. Select text on any page, right-click, and choose **Explain**. This uses Chrome's temporary access for that tab only.
 
 ## Load in Firefox
 
 1. Open `about:debugging#/runtime/this-firefox`.
 2. Choose **Load Temporary Add-on** and select `dist/firefox/manifest.json`.
-3. Select the Explain icon on a page and choose **Use on this page**, then select text.
-4. Choose a Gemini Flash model in the extension popup and enter your Google AI Studio API key. The key and model choice stay in session storage and clear when the browser closes.
+3. Click the Explain icon in the toolbar and paste your Google AI Studio API key. The key stays in session storage and clears when the browser closes.
+4. Select text on any page, right-click, and choose **Explain**.
 
-Explain defaults to Gemini 3.8 Flash. The model menu also offers Gemini 3.6 Flash, 3.5 Flash-Lite, and 3.1 Flash-Lite. Explain calls the model directly; it does not perform Google Search. Google describes Gemini 2.5 API access as limited for new users and recommends current Flash models for new projects. Free access is limited to certain models and has account-specific rate limits. On Google's free tier, submitted content may be used to improve its products; its paid tier states that content is not used for this purpose. [Review Gemini API pricing and data terms](https://ai.google.dev/gemini-api/docs/pricing) and [create or manage a key in Google AI Studio](https://aistudio.google.com/apikey).
+Explain uses Gemini 3.8 Flash and calls the model directly; it does not perform Google Search. Google describes Gemini 2.5 API access as limited for new users and recommends current Flash models for new projects. Free access is limited to certain models and has account-specific rate limits. On Google's free tier, submitted content may be used to improve its products; its paid tier states that content is not used for this purpose. [Review Gemini API pricing and data terms](https://ai.google.dev/gemini-api/docs/pricing) and [create or manage a key in Google AI Studio](https://aistudio.google.com/apikey).
 
-Your selected text, nearby paragraph, page title, and API key go directly to Google's Gemini API. The page's HTML is not sent. Answers are rendered as plain text. The key remains in browser session memory and is cleared when the browser closes; no key or explanation is bundled with the extension. See the [privacy policy](PRIVACY.md).
+Your selected text, nearby paragraph, page title, and API key go directly to Google's Gemini API. The page's HTML is not sent. Answers are rendered as plain text. The key is the only value Explain stores; it remains in browser session memory and is cleared when the browser closes. No key or explanation is bundled with the extension. See the [privacy policy](PRIVACY.md).
 
 ## Upstream
 

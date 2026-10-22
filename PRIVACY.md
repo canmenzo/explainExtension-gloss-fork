@@ -6,24 +6,24 @@ Explain has no servers of its own. It does not collect analytics, telemetry, or 
 
 ## What Explain sends, and where
 
-Explain sends data only when you choose **Explain** (or press **Enter**) on a selection, on a page where you chose **Use on this page**. Each request goes directly from your browser to Google's Gemini API at `generativelanguage.googleapis.com`, and nowhere else. A request contains:
+Explain sends data only when you select text, right-click, and choose **Explain**. Each request goes directly from your browser to Google's Gemini API at `generativelanguage.googleapis.com`, and nowhere else. A request contains:
 
 - the text you selected (up to 12,000 characters);
 - the nearby text from the paragraph, list item, heading, or table cell that contains the selection (up to 5,000 characters);
 - the page title (up to 300 characters);
-- the Gemini model you chose;
 - your Gemini API key, which authenticates the request.
 
-Explain does not send the page address, the page's HTML, or anything from pages where you have not enabled it.
+Explain does not send the page address, the page's HTML, or anything from pages where you have not chosen **Explain**.
 
 ## What Explain stores
 
-Your API key and model choice are kept in the browser's extension session storage (`chrome.storage.session`). They stay in memory, are never written to disk by Explain, and are cleared when the browser closes. Explain stores nothing else: selections and explanations are shown on the page and discarded.
+Your API key is the only value Explain stores. It is kept in the browser's extension session storage (`chrome.storage.session`), stays in memory, is never written to disk by Explain, and is cleared when the browser closes. Selections and explanations are shown on the page and discarded.
 
 ## Permissions
 
-- `activeTab` and `scripting`: run Explain on the current tab only after you choose **Use on this page**.
-- `storage`: keep your API key and model choice for the browser session.
+- `contextMenus`: add **Explain** to the right-click menu when text is selected.
+- `activeTab` and `scripting`: show the Explain card on the current tab only after you choose **Explain** from that menu.
+- `storage`: keep your API key for the browser session.
 - Access to `generativelanguage.googleapis.com`: send Explain requests to Google Gemini.
 
 ## Google's terms

@@ -12,7 +12,7 @@ function sse(...chunks) {
 
 const textChunk = (text, extra = {}) => ({ candidates: [{ content: { parts: [{ text }] }, ...extra }] });
 
-function runtime({ model = "gemini-3.8-flash", key = "test-key", body = sse(textChunk("A clear "), textChunk("explanation.", { finishReason: "STOP" })), status = 200, failFrames = [] } = {}) {
+function runtime({ key = "test-key", body = sse(textChunk("A clear "), textChunk("explanation.", { finishReason: "STOP" })), status = 200, failFrames = [] } = {}) {
   const listeners = {};
   const sent = [];
   const injected = [];
@@ -25,7 +25,7 @@ function runtime({ model = "gemini-3.8-flash", key = "test-key", body = sse(text
     runtime: { onInstalled: event("installed"), onMessage: event("message"), onConnect: event("connect"), getURL(path) { return path; } },
     contextMenus: { onClicked: event("clicked"), async removeAll() { menus.length = 0; }, create(item) { menus.push(item); } },
     action: { async openPopup() { popupOpened = true; } },
-    storage: { session: { async set(value) { Object.assign(stored, value); }, async get() { return key ? { geminiKey: key, geminiModel: model } : {}; } } },
+    storage: { session: { async set(value) { Object.assign(stored, value); }, async get() { return key ? { geminiKey: key } : {}; } } },
     tabs: { async sendMessage(tabId, message, options) { messages.push({ tabId, message, options }); } },
     scripting: {
       async executeScript(value) {
@@ -122,12 +122,11 @@ test("stream events split across network reads and thought parts are handled", a
 
 test("compiled Rust clips by Unicode characters and encodes hostile text as data", async () => {
   const hostile = "<img src=x onerror=alert(1)> \" 猫";
-  const app = runtime({ model: "gemini-3.5-flash-lite" });
+  const app = runtime();
   await app.explain({ selection: hostile, context: "猫".repeat(6000) });
   const prompt = JSON.parse(app.sent[0][1].body).contents[0].parts[0].text;
   assert.ok(prompt.includes(hostile));
   assert.equal((prompt.split("\n\nSelected text:")[0].match(/猫/g) || []).length, 5000);
-  assert.match(app.sent[0][0], /gemini-3\.5-flash-lite:streamGenerateContent/);
 });
 
 test("missing key and invalid selection return errors without a request", async () => {
@@ -145,9 +144,8 @@ test("Rust parses provider, empty, blocked and malformed responses", async () =>
   assert.match((await runtime({ body: sse({ promptFeedback: { blockReason: "SAFETY" } }) }).explain({ selection: "word" }))[0].error, /declined/);
 });
 
-test("key storage is session-scoped", async () => {
+test("save-key stores only the key, in session storage", async () => {
   const app = runtime();
-  assert.equal((await app.handle({ type: "save-key", key: "session-key", model: "gemini-3.6-flash" })).ok, true);
-  assert.equal(app.stored.geminiKey, "session-key");
-  assert.equal(app.stored.geminiModel, "gemini-3.6-flash");
+  assert.equal((await app.handle({ type: "save-key", key: "session-key" })).ok, true);
+  assert.deepEqual({ ...app.stored }, { geminiKey: "session-key" });
 });

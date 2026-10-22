@@ -248,50 +248,73 @@ async def popup_fixture(browser_type):
         await page.add_init_script("""window.pending=[];window.chrome={storage:{session:{get:async()=>({}),set:async()=>{}}},
           runtime:{sendMessage:message=>new Promise((resolve,reject)=>window.pending.push({message,resolve,reject}))}};""")
         await page.goto("http://popup.test/popup.html")
-        await expect(page.locator("#key-state")).to_contain_text("Add your key")
+        form = page.locator("#key-form")
+        ready = page.locator("#ready")
         await expect(page.locator("#api-key")).to_be_focused()
-        await expect(page.locator(".how")).to_contain_text("Right-click")
-        height = await page.locator("main").evaluate("element => element.getBoundingClientRect().height")
+        await expect(form).to_be_visible()
+        await expect(ready).to_be_hidden()
+        await expect(page.get_by_role("link", name="Get a free key")).to_have_attribute("href", "https://aistudio.google.com/apikey")
+        assert await page.locator("select, #model, .how, ol").count() == 0
         # Chrome caps popups at 600px; leave room for the validation message.
+        height = await page.locator("main").evaluate("element => element.getBoundingClientRect().height")
         assert height <= 576, height
         await evidence(page, f"{browser_type.name}-popup-setup.png", full_page=True)
         # Chrome measures popups from a tiny initial viewport; the layout must not shrink with it.
         await page.set_viewport_size({"width": 160, "height": 600})
         assert await page.locator("body").evaluate("element => element.getBoundingClientRect().width") == 336
         await page.set_viewport_size({"width": 336, "height": 600})
-        save = page.locator("#key-form .save")
+        save = form.locator(".save")
         await save.click()
         await expect(page.locator("#key-error")).to_be_visible()
         await expect(page.locator("#api-key")).to_be_focused()
         await expect(page.locator("#api-key")).to_have_attribute("aria-invalid", "true")
         assert await page.evaluate("window.pending.length") == 0
         await page.locator("#api-key").fill("fixture-test-key")
+        await expect(page.locator("#key-error")).to_be_hidden()
         await page.get_by_role("button", name="Show API key").click()
         await expect(page.locator("#api-key")).to_have_attribute("type", "text")
         await page.get_by_role("button", name="Hide API key").click()
         await save.click()
         await expect(save).to_be_disabled()
-        await expect(page.locator("#key-form")).to_have_attribute("aria-busy", "true")
+        await expect(form).to_have_attribute("aria-busy", "true")
+        await expect(save).to_contain_text("Saving")
+        assert await page.evaluate("window.pending.at(-1).message") == {"type": "save-key", "key": "fixture-test-key"}
         await page.evaluate("window.pending.at(-1).resolve({ok:true})")
-        await expect(page.locator("#status")).to_contain_text("right-click")
-        await expect(save).to_be_enabled()
+        await expect(ready).to_be_visible()
+        await expect(ready).to_contain_text("right-click")
+        await expect(form).to_be_hidden()
+        await expect(page.locator("#status")).to_have_text("Key saved.")
         await expect(page.locator("#api-key")).to_have_value("")
         await expect(page.locator("#api-key")).to_have_attribute("type", "password")
-        await expect(page.locator("#key-state")).to_contain_text("Ready")
-        await evidence(page, f"{browser_type.name}-popup-saved.png")
+        await evidence(page, f"{browser_type.name}-popup-saved.png", full_page=True)
+
+        # A saved key can be replaced; failures keep the form open with the reason.
+        await page.get_by_role("button", name="Replace key").click()
+        await expect(form).to_be_visible()
+        await expect(page.locator("#api-key")).to_be_focused()
+        await expect(page.locator("#status")).to_be_empty()
+        height = await page.locator("main").evaluate("element => element.getBoundingClientRect().height")
+        assert height <= 576, height
         await page.locator("#api-key").fill("fixture-test-key")
         await save.click()
         await page.evaluate("window.pending.at(-1).resolve({error:'Storage unavailable'})")
         await expect(page.locator("#status")).to_contain_text("Could not save the key")
+        await expect(form).to_be_visible()
+        await evidence(page, f"{browser_type.name}-popup-replace-error.png", full_page=True)
         await page.locator("#api-key").fill("fixture-test-key")
         await save.click()
         await page.evaluate("window.pending.at(-1).reject(new Error('Disconnected'))")
         await expect(save).to_be_enabled()
         await expect(page.locator("#status")).to_contain_text("Reopen Explain")
+        await page.get_by_role("button", name="Cancel").click()
+        await expect(form).to_be_hidden()
+        await expect(page.get_by_role("button", name="Replace key")).to_be_focused()
+        await expect(page.locator("#api-key")).to_have_value("")
         await page.emulate_media(reduced_motion="reduce")
+        await page.get_by_role("button", name="Replace key").click()
         await page.get_by_role("button", name="Show API key").click()
         assert await page.evaluate("document.getAnimations().filter(animation => animation.playState === 'running').length") == 0
-        print(f"PASS {browser_type.name}: popup setup ({height:.0f}px), width, validation, save, errors, reduced motion")
+        print(f"PASS {browser_type.name}: popup setup ({height:.0f}px), width, validation, save, ready state, replace, errors, reduced motion")
     finally:
         await browser.close()
 
@@ -310,10 +333,9 @@ async def chromium_extension_smoke(playwright):
             await popup.goto(f"chrome-extension://{extension_id}/popup.html")
             await popup.get_by_role("heading", name="Explain", exact=True).wait_for()
             await popup.locator("#api-key").fill("session-test-key")
-            await popup.get_by_role("button", name="Save for this session").click()
-            await expect(popup.locator("#status")).to_contain_text("right-click")
-            assert await popup.evaluate("chrome.storage.session.get(['geminiKey','geminiModel'])") == {
-                "geminiKey": "session-test-key", "geminiModel": "gemini-3.8-flash"}
+            await popup.get_by_role("button", name="Save key").click()
+            await expect(popup.locator("#ready")).to_be_visible()
+            assert await popup.evaluate("chrome.storage.session.get(null)") == {"geminiKey": "session-test-key"}
             stream = """selection => new Promise(resolve => {
               const port = chrome.runtime.connect({name: 'explain'});
               const received = [];
@@ -326,8 +348,8 @@ async def chromium_extension_smoke(playwright):
             # The real worker loads the Rust core under the extension CSP and rejects a blank selection.
             assert await popup.evaluate(stream, "   ") == [{"error": "Select some text first."}]
             await popup.reload()
-            await expect(popup.locator("#key-state")).to_contain_text("Ready")
-            await expect(popup.locator("#api-key")).to_have_value("")
+            await expect(popup.locator("#ready")).to_contain_text("Ready to explain")
+            await expect(popup.locator("#key-form")).to_be_hidden()
             await evidence(popup, "chromium-extension-popup.png")
             print("PASS Chromium unpacked extension: popup session save and reload, Rust core in the service worker")
         finally:
